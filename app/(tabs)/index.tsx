@@ -277,6 +277,7 @@ export default function HomeScreen() {
         onSave={handleModalSave}
         transaction={selectedTransaction}
         categories={categories}
+        initialType={modalType}
       />
     </ScreenContainer>
   );

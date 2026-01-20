@@ -21,6 +21,7 @@ interface TransactionModalProps {
   onSave: () => void;
   transaction?: Transaction;
   categories: Category[];
+  initialType?: TransactionType;
 }
 
 export function TransactionModal({
@@ -29,6 +30,7 @@ export function TransactionModal({
   onSave,
   transaction,
   categories,
+  initialType = "expense",
 }: TransactionModalProps) {
   const colors = useColors();
   const isEdit = !!transaction;
@@ -47,13 +49,13 @@ export function TransactionModal({
       setDate(transaction.date.split("T")[0]);
       setMemo(transaction.memo || "");
     } else {
-      setType("expense");
+      setType(initialType);
       setAmount("");
       setCategoryId(undefined);
       setDate(new Date().toISOString().split("T")[0]);
       setMemo("");
     }
-  }, [transaction, visible]);
+  }, [transaction, visible, initialType]);
 
   const handleSave = async () => {
     if (!amount || parseFloat(amount) <= 0) {
