@@ -3,14 +3,10 @@
  * over .env file values. This ensures that Manus platform-injected variables
  * are not overridden by placeholder values in .env
  */
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+const fs = require("fs");
+const path = require("path");
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const envPath = path.resolve(process.cwd(), ".env");
+const envPath = path.resolve(__dirname, "../.env");
 
 if (fs.existsSync(envPath)) {
   const envContent = fs.readFileSync(envPath, "utf8");
