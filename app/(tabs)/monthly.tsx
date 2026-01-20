@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { View, Text, ScrollView, Pressable, Platform, Dimensions } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { BarChart } from "react-native-chart-kit";
@@ -41,9 +42,11 @@ export default function MonthlyScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const previousMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
   const previousYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;

@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { View, Text, ScrollView, Pressable, Platform, Dimensions } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { LineChart, PieChart } from "react-native-chart-kit";
@@ -37,9 +38,11 @@ export default function YearlyScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const previousYearTransactions = filterTransactionsByYear(transactions, selectedYear - 1);
   const summary = calculateYearlySummary(
