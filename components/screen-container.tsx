@@ -2,6 +2,7 @@ import { View, type ViewProps } from "react-native";
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
 
 import { cn } from "@/lib/utils";
+import { SwipeableScreen } from "@/components/swipeable-screen";
 
 export interface ScreenContainerProps extends ViewProps {
   /**
@@ -21,6 +22,10 @@ export interface ScreenContainerProps extends ViewProps {
    * Additional className for the SafeAreaView (content layer).
    */
   safeAreaClassName?: string;
+  /**
+   * Enable swipe navigation between tabs.
+   */
+  swipeable?: boolean;
 }
 
 /**
@@ -44,10 +49,11 @@ export function ScreenContainer({
   className,
   containerClassName,
   safeAreaClassName,
+  swipeable = true,
   style,
   ...props
 }: ScreenContainerProps) {
-  return (
+  const content = (
     <View
       className={cn(
         "flex-1",
@@ -65,4 +71,10 @@ export function ScreenContainer({
       </SafeAreaView>
     </View>
   );
+
+  if (swipeable) {
+    return <SwipeableScreen>{content}</SwipeableScreen>;
+  }
+
+  return content;
 }
