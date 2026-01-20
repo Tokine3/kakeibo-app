@@ -192,7 +192,7 @@ export default function HomeScreen() {
                         borderRadius: 12,
                         padding: 12,
                         borderWidth: 1,
-                        borderColor: colors.border,
+                        borderColor: transaction.type === "income" ? `${colors.success}80` : `${colors.error}80`,
                         opacity: pressed ? 0.7 : 1,
                       })}
                       onPress={() => handleEditTransaction(transaction)}

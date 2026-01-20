@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,9 @@ import {
   Pressable,
   Platform,
   Alert,
+  Keyboard,
 } from "react-native";
+import type { TextInput as TextInputType } from "react-native";
 import * as Haptics from "expo-haptics";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import dayjs from "dayjs";
@@ -36,12 +38,28 @@ export function TransactionModal({
 }: TransactionModalProps) {
   const colors = useColors();
   const isEdit = !!transaction;
+  const amountInputRef = useRef<TextInputType>(null);
 
   const [type, setType] = useState<TransactionType>("expense");
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(""); // カンマなしの数値文字列
   const [categoryId, setCategoryId] = useState<string | undefined>();
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [memo, setMemo] = useState("");
+  const [isAmountFocused, setIsAmountFocused] = useState(false);
+
+  // 数値をカンマ区切りでフォーマット
+  const formatWithComma = (value: string): string => {
+    if (!value) return "";
+    const num = parseInt(value, 10);
+    if (isNaN(num)) return "";
+    return num.toLocaleString("ja-JP");
+  };
+
+  // 入力からカンマを除去して数値のみ取得
+  const handleAmountChange = (text: string): void => {
+    const numericValue = text.replace(/[^0-9]/g, "");
+    setAmount(numericValue);
+  };
 
   useEffect(() => {
     if (transaction) {
@@ -59,14 +77,22 @@ export function TransactionModal({
     }
   }, [transaction, visible, initialType]);
 
+  const showAlert = (title: string, message: string) => {
+    if (Platform.OS === "web") {
+      window.alert(`${title}: ${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
+
   const handleSave = async () => {
     if (!amount || parseFloat(amount) <= 0) {
-      Alert.alert("エラー", "金額を入力してください。");
+      showAlert("エラー", "金額を入力してください。");
       return;
     }
 
     if (!categoryId) {
-      Alert.alert("エラー", "カテゴリを選択してください。");
+      showAlert("エラー", "カテゴリを選択してください。");
       return;
     }
 
@@ -97,33 +123,41 @@ export function TransactionModal({
       onClose();
     } catch (error) {
       console.error("Failed to save transaction:", error);
-      Alert.alert("エラー", "保存に失敗しました。");
+      showAlert("エラー", "保存に失敗しました。");
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!transaction) return;
 
-    Alert.alert("取引を削除", "この取引を削除しますか?", [
-      { text: "キャンセル", style: "cancel" },
-      {
-        text: "削除",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            if (Platform.OS !== "web") {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            }
-            await deleteTransaction(transaction.id);
-            onSave();
-            onClose();
-          } catch (error) {
-            console.error("Failed to delete transaction:", error);
-            Alert.alert("エラー", "削除に失敗しました。");
-          }
+    const doDelete = async () => {
+      try {
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        }
+        await deleteTransaction(transaction.id);
+        onSave();
+        onClose();
+      } catch (error) {
+        console.error("Failed to delete transaction:", error);
+        showAlert("エラー", "削除に失敗しました。");
+      }
+    };
+
+    if (Platform.OS === "web") {
+      if (window.confirm("この取引を削除しますか?")) {
+        await doDelete();
+      }
+    } else {
+      Alert.alert("取引を削除", "この取引を削除しますか?", [
+        { text: "キャンセル", style: "cancel" },
+        {
+          text: "削除",
+          style: "destructive",
+          onPress: doDelete,
         },
-      },
-    ]);
+      ]);
+    }
   };
 
   return (
@@ -165,7 +199,11 @@ export function TransactionModal({
           </Pressable>
         </View>
 
-        <ScrollView style={{ flex: 1 }}>
+        <ScrollView
+          style={{ flex: 1 }}
+          keyboardShouldPersistTaps="handled"
+          onScrollBeginDrag={Keyboard.dismiss}
+        >
           <View style={{ padding: 16, gap: 24 }}>
             {/* Type Selector */}
             <View>
@@ -246,25 +284,50 @@ export function TransactionModal({
                   paddingHorizontal: 16,
                   paddingVertical: 12,
                   borderWidth: 1,
-                  borderColor: colors.border,
+                  borderColor: isAmountFocused ? colors.primary : colors.border,
                 }}
               >
                 <Text style={{ fontSize: 24, color: colors.foreground, marginRight: 8 }}>
                   ¥
                 </Text>
                 <TextInput
+                  ref={amountInputRef}
                   style={{
                     flex: 1,
                     fontSize: 24,
                     color: colors.foreground,
                     padding: 0,
                   }}
-                  value={amount}
-                  onChangeText={setAmount}
+                  value={formatWithComma(amount)}
+                  onChangeText={handleAmountChange}
                   keyboardType="numeric"
                   placeholder="0"
                   placeholderTextColor={colors.muted}
+                  onFocus={() => setIsAmountFocused(true)}
+                  onBlur={() => setIsAmountFocused(false)}
                 />
+                {isAmountFocused && (
+                  <Pressable
+                    style={({ pressed }) => ({
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      backgroundColor: colors.primary,
+                      borderRadius: 8,
+                      marginLeft: 8,
+                      opacity: pressed ? 0.7 : 1,
+                    })}
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      if (Platform.OS !== "web") {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      }
+                    }}
+                  >
+                    <Text style={{ color: "#FFFFFF", fontSize: 14, fontWeight: "600" }}>
+                      完了
+                    </Text>
+                  </Pressable>
+                )}
               </View>
             </View>
 
