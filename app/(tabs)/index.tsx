@@ -199,45 +199,27 @@ export default function HomeScreen() {
                     >
                       <View className="flex-row items-center justify-between">
                         <View className="flex-row items-center flex-1">
-                          {transaction.type === "expense" && category ? (
-                            <View
-                              style={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: 20,
-                                backgroundColor: category.color,
-                                alignItems: "center",
-                                justifyContent: "center",
-                                marginRight: 12,
-                              }}
-                            >
-                              <MaterialIcons
-                                name={category.icon as any}
-                                size={20}
-                                color="#FFFFFF"
-                              />
-                            </View>
-                          ) : (
-                            <View
-                              style={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: 20,
-                                backgroundColor: colors.success,
-                                alignItems: "center",
-                                justifyContent: "center",
-                                marginRight: 12,
-                              }}
-                            >
-                              <MaterialIcons name="trending-up" size={20} color="#FFFFFF" />
-                            </View>
-                          )}
-                          
+                          <View
+                            style={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: 20,
+                              backgroundColor: category?.color || colors.muted,
+                              alignItems: "center",
+                              justifyContent: "center",
+                              marginRight: 12,
+                            }}
+                          >
+                            <MaterialIcons
+                              name={(category?.icon as any) || "more-horiz"}
+                              size={20}
+                              color="#FFFFFF"
+                            />
+                          </View>
+
                           <View className="flex-1">
                             <Text className="text-base font-semibold text-foreground">
-                              {transaction.type === "expense"
-                                ? category?.name || "その他"
-                                : "収入"}
+                              {category?.name || "その他"}
                             </Text>
                             <Text className="text-xs text-muted mt-1">
                               {formatDate(transaction.date)}

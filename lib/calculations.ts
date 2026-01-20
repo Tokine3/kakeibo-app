@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import type { Transaction, Category, MonthlySummary, YearlySummary, CategoryExpense } from "@/types";
 
 /**
@@ -5,8 +6,8 @@ import type { Transaction, Category, MonthlySummary, YearlySummary, CategoryExpe
  */
 export function filterTransactionsByMonth(transactions: Transaction[], year: number, month: number): Transaction[] {
   return transactions.filter((t) => {
-    const date = new Date(t.date);
-    return date.getFullYear() === year && date.getMonth() + 1 === month;
+    const d = dayjs(t.date);
+    return d.year() === year && d.month() + 1 === month;
   });
 }
 
@@ -15,8 +16,8 @@ export function filterTransactionsByMonth(transactions: Transaction[], year: num
  */
 export function filterTransactionsByYear(transactions: Transaction[], year: number): Transaction[] {
   return transactions.filter((t) => {
-    const date = new Date(t.date);
-    return date.getFullYear() === year;
+    const d = dayjs(t.date);
+    return d.year() === year;
   });
 }
 
@@ -221,15 +222,11 @@ export function formatPercentage(percentage: number): string {
  */
 export function formatDate(date: string | Date): string {
   try {
-    const d = typeof date === "string" ? new Date(date) : date;
-    if (isNaN(d.getTime())) {
+    const d = dayjs(date);
+    if (!d.isValid()) {
       return "不明";
     }
-    return new Intl.DateTimeFormat("ja-JP", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }).format(d);
+    return d.format("YYYY年M月D日");
   } catch (error) {
     console.error("Failed to format date:", date, error);
     return "不明";

@@ -10,7 +10,7 @@ export interface Transaction {
   id: string;
   type: TransactionType;
   amount: number;
-  categoryId?: string; // 支出の場合のみ必須
+  categoryId?: string; // カテゴリID
   date: string; // ISO 8601 形式
   memo?: string;
   createdAt: string;
