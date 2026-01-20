@@ -11,7 +11,9 @@ import {
 } from "react-native";
 import * as Haptics from "expo-haptics";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import dayjs from "dayjs";
 import { useColors } from "@/hooks/use-colors";
+import { CalendarPicker } from "@/components/calendar-picker";
 import type { Transaction, TransactionType, Category } from "@/types";
 import { saveTransaction, updateTransaction, deleteTransaction } from "@/lib/storage";
 
@@ -38,7 +40,7 @@ export function TransactionModal({
   const [type, setType] = useState<TransactionType>("expense");
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState<string | undefined>();
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [memo, setMemo] = useState("");
 
   useEffect(() => {
@@ -46,13 +48,13 @@ export function TransactionModal({
       setType(transaction.type);
       setAmount(transaction.amount.toString());
       setCategoryId(transaction.categoryId);
-      setDate(transaction.date.split("T")[0]);
+      setDate(dayjs(transaction.date).format("YYYY-MM-DD"));
       setMemo(transaction.memo || "");
     } else {
       setType(initialType);
       setAmount("");
       setCategoryId(undefined);
-      setDate(new Date().toISOString().split("T")[0]);
+      setDate(dayjs().format("YYYY-MM-DD"));
       setMemo("");
     }
   }, [transaction, visible, initialType]);
@@ -63,7 +65,7 @@ export function TransactionModal({
       return;
     }
 
-    if (type === "expense" && !categoryId) {
+    if (!categoryId) {
       Alert.alert("エラー", "カテゴリを選択してください。");
       return;
     }
@@ -77,7 +79,7 @@ export function TransactionModal({
         await updateTransaction(transaction.id, {
           type,
           amount: parseFloat(amount),
-          categoryId: type === "expense" ? categoryId : undefined,
+          categoryId,
           date: `${date}T00:00:00.000Z`,
           memo: memo || undefined,
         });
@@ -85,7 +87,7 @@ export function TransactionModal({
         await saveTransaction({
           type,
           amount: parseFloat(amount),
-          categoryId: type === "expense" ? categoryId : undefined,
+          categoryId,
           date: `${date}T00:00:00.000Z`,
           memo: memo || undefined,
         });
@@ -266,14 +268,15 @@ export function TransactionModal({
               </View>
             </View>
 
-            {/* Category Selector (for expense only) */}
-            {type === "expense" && (
-              <View>
-                <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 8 }}>
-                  カテゴリ
-                </Text>
-                <View style={{ gap: 8 }}>
-                  {categories.map((category) => (
+            {/* Category Selector */}
+            <View>
+              <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 8 }}>
+                カテゴリ
+              </Text>
+              <View style={{ gap: 8 }}>
+                {categories
+                  .filter((category) => category.type === type)
+                  .map((category) => (
                     <Pressable
                       key={category.id}
                       style={({ pressed }) => ({
@@ -323,31 +326,15 @@ export function TransactionModal({
                       </Text>
                     </Pressable>
                   ))}
-                </View>
               </View>
-            )}
+            </View>
 
             {/* Date Input */}
             <View>
               <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 8 }}>
                 日付
               </Text>
-              <TextInput
-                style={{
-                  backgroundColor: colors.surface,
-                  borderRadius: 12,
-                  paddingHorizontal: 16,
-                  paddingVertical: 12,
-                  fontSize: 16,
-                  color: colors.foreground,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}
-                value={date}
-                onChangeText={setDate}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={colors.muted}
-              />
+              <CalendarPicker value={date} onChange={setDate} />
             </View>
 
             {/* Memo Input */}

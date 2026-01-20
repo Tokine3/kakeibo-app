@@ -23,7 +23,7 @@ const DEFAULT_CATEGORIES: Omit<Category, "id" | "createdAt" | "updatedAt">[] = [
   { name: "給与", icon: "work", color: "#4CAF50", isDefault: true, order: 7, type: "income" },
   { name: "賞与", icon: "card-giftcard", color: "#8BC34A", isDefault: true, order: 8, type: "income" },
   { name: "臨時収入", icon: "trending-up", color: "#CDDC39", isDefault: true, order: 9, type: "income" },
-  { name: "その他（自由記述）", icon: "edit", color: "#FFC107", isDefault: true, order: 10, type: "income" },
+  { name: "その他", icon: "more-horiz", color: "#FFC107", isDefault: true, order: 10, type: "income" },
 ];
 
 /**
