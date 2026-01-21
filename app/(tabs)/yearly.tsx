@@ -214,7 +214,7 @@ export default function YearlyScreen() {
 
               <View className="flex-row items-center justify-between">
                 <Text className="text-base font-semibold text-foreground">
-                  差額
+                  収支
                 </Text>
                 <Text
                   className="text-xl font-bold"
@@ -222,7 +222,9 @@ export default function YearlyScreen() {
                     color: summary.balance >= 0 ? colors.success : colors.error,
                   }}
                 >
-                  {formatAmount(summary.balance)}
+                  {summary.balance >= 0
+                    ? `+${formatAmount(summary.balance)}`
+                    : formatAmount(summary.balance)}
                 </Text>
               </View>
 
@@ -473,6 +475,7 @@ export default function YearlyScreen() {
                   <Text className="text-base text-foreground font-medium">
                     {data.month}月
                   </Text>
+
                   <View className="items-end">
                     <Text className="text-sm" style={{ color: colors.success }}>
                       収入: {formatAmount(data.income)}
@@ -487,7 +490,10 @@ export default function YearlyScreen() {
                           data.balance >= 0 ? colors.success : colors.error,
                       }}
                     >
-                      差額: {formatAmount(data.balance)}
+                      収支:
+                      {data.balance >= 0
+                        ? `+${formatAmount(data.balance)}`
+                        : formatAmount(data.balance)}
                     </Text>
                   </View>
                 </View>
