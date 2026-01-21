@@ -119,10 +119,16 @@ export default function YearlyScreen() {
     legendFontSize: 12,
   }));
 
-  const sectionTitle = viewMode === "expense" ? "年間カテゴリ別支出" : viewMode === "income" ? "年間カテゴリ別収入" : "年間カテゴリ別内訳";
-  const hasChartData = viewMode === "all"
-    ? categoryExpenseData.length > 0 || categoryIncome.length > 0
-    : currentCategoryData.length > 0;
+  const sectionTitle =
+    viewMode === "expense"
+      ? "年間カテゴリ別支出"
+      : viewMode === "income"
+        ? "年間カテゴリ別収入"
+        : "年間カテゴリ別内訳";
+  const hasChartData =
+    viewMode === "all"
+      ? categoryExpenseData.length > 0 || categoryIncome.length > 0
+      : currentCategoryData.length > 0;
 
   return (
     <ScreenContainer>
@@ -307,13 +313,12 @@ export default function YearlyScreen() {
 
           {/* Category Pie Chart */}
           <View className="bg-surface rounded-2xl p-4 border border-border">
-            <Text className="text-lg font-bold text-foreground mb-2">
-              {sectionTitle}
-            </Text>
-
             <View style={{ marginBottom: 12 }}>
               <SegmentControl value={viewMode} onChange={setViewMode} />
             </View>
+            <Text className="text-lg font-bold text-foreground mb-2">
+              {sectionTitle}
+            </Text>
 
             {hasChartData ? (
               <>
@@ -321,12 +326,12 @@ export default function YearlyScreen() {
                   <DoublePieChart
                     expenseData={categoryExpenseData}
                     incomeData={categoryIncome}
-                    width={chartWidth - 32}
+                    width={chartWidth}
                   />
                 ) : (
                   <PieChart
                     data={pieChartData}
-                    width={chartWidth - 32}
+                    width={chartWidth}
                     height={180}
                     chartConfig={{
                       color: (opacity = 1) => colors.primary,
@@ -345,7 +350,10 @@ export default function YearlyScreen() {
                 {viewMode === "all" ? (
                   <View className="gap-2">
                     {categoryExpenseData.length > 0 && (
-                      <Text className="text-sm font-semibold text-foreground mt-2" style={{ color: colors.error }}>
+                      <Text
+                        className="text-sm font-semibold text-foreground mt-2"
+                        style={{ color: colors.error }}
+                      >
                         支出
                       </Text>
                     )}
@@ -369,12 +377,16 @@ export default function YearlyScreen() {
                           </Text>
                         </View>
                         <Text className="text-sm font-semibold text-foreground">
-                          {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}%)
+                          {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}
+                          %)
                         </Text>
                       </View>
                     ))}
                     {categoryIncome.length > 0 && (
-                      <Text className="text-sm font-semibold text-foreground mt-2" style={{ color: colors.success }}>
+                      <Text
+                        className="text-sm font-semibold text-foreground mt-2"
+                        style={{ color: colors.success }}
+                      >
                         収入
                       </Text>
                     )}
@@ -398,7 +410,8 @@ export default function YearlyScreen() {
                           </Text>
                         </View>
                         <Text className="text-sm font-semibold text-foreground">
-                          {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}%)
+                          {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}
+                          %)
                         </Text>
                       </View>
                     ))}
@@ -425,7 +438,8 @@ export default function YearlyScreen() {
                           </Text>
                         </View>
                         <Text className="text-sm font-semibold text-foreground">
-                          {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}%)
+                          {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}
+                          %)
                         </Text>
                       </View>
                     ))}

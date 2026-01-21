@@ -166,10 +166,16 @@ export default function MonthlyScreen() {
     legendFontSize: 12,
   }));
 
-  const sectionTitle = viewMode === "expense" ? "カテゴリ別支出" : viewMode === "income" ? "カテゴリ別収入" : "カテゴリ別内訳";
-  const hasChartData = viewMode === "all"
-    ? categoryExpenseData.length > 0 || categoryIncome.length > 0
-    : currentCategoryData.length > 0;
+  const sectionTitle =
+    viewMode === "expense"
+      ? "カテゴリ別支出"
+      : viewMode === "income"
+        ? "カテゴリ別収入"
+        : "カテゴリ別内訳";
+  const hasChartData =
+    viewMode === "all"
+      ? categoryExpenseData.length > 0 || categoryIncome.length > 0
+      : currentCategoryData.length > 0;
 
   return (
     <ScreenContainer>
@@ -302,14 +308,14 @@ export default function MonthlyScreen() {
           </View>
 
           {/* Category Chart */}
-          <View className="bg-surface rounded-2xl p-4 border border-border">
-            <Text className="text-lg font-bold text-foreground mb-2">
-              {sectionTitle}
-            </Text>
 
+          <View className="bg-surface rounded-2xl p-4 border border-border">
             <View style={{ marginBottom: 12 }}>
               <SegmentControl value={viewMode} onChange={setViewMode} />
             </View>
+            <Text className="text-lg font-bold text-foreground mb-2">
+              {sectionTitle}
+            </Text>
 
             {hasChartData ? (
               <>
@@ -317,12 +323,12 @@ export default function MonthlyScreen() {
                   <DoublePieChart
                     expenseData={categoryExpenseData}
                     incomeData={categoryIncome}
-                    width={chartWidth - 32}
+                    width={chartWidth}
                   />
                 ) : (
                   <PieChart
                     data={pieChartData}
-                    width={chartWidth - 32}
+                    width={chartWidth}
                     height={180}
                     chartConfig={{
                       color: (opacity = 1) => colors.primary,
@@ -341,7 +347,10 @@ export default function MonthlyScreen() {
                 {viewMode === "all" ? (
                   <View className="gap-2">
                     {categoryExpenseData.length > 0 && (
-                      <Text className="text-sm font-semibold text-foreground mt-2" style={{ color: colors.error }}>
+                      <Text
+                        className="text-sm font-semibold text-foreground mt-2"
+                        style={{ color: colors.error }}
+                      >
                         支出
                       </Text>
                     )}
@@ -365,12 +374,16 @@ export default function MonthlyScreen() {
                           </Text>
                         </View>
                         <Text className="text-sm font-semibold text-foreground">
-                          {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}%)
+                          {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}
+                          %)
                         </Text>
                       </View>
                     ))}
                     {categoryIncome.length > 0 && (
-                      <Text className="text-sm font-semibold text-foreground mt-2" style={{ color: colors.success }}>
+                      <Text
+                        className="text-sm font-semibold text-foreground mt-2"
+                        style={{ color: colors.success }}
+                      >
                         収入
                       </Text>
                     )}
@@ -394,7 +407,8 @@ export default function MonthlyScreen() {
                           </Text>
                         </View>
                         <Text className="text-sm font-semibold text-foreground">
-                          {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}%)
+                          {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}
+                          %)
                         </Text>
                       </View>
                     ))}
@@ -421,7 +435,8 @@ export default function MonthlyScreen() {
                           </Text>
                         </View>
                         <Text className="text-sm font-semibold text-foreground">
-                          {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}%)
+                          {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}
+                          %)
                         </Text>
                       </View>
                     ))}
@@ -446,7 +461,8 @@ export default function MonthlyScreen() {
               取引履歴
               {viewMode !== "all" && (
                 <Text className="text-sm font-normal text-muted">
-                  {" "}({viewMode === "expense" ? "支出" : "収入"}のみ)
+                  {" "}
+                  ({viewMode === "expense" ? "支出" : "収入"}のみ)
                 </Text>
               )}
             </Text>
@@ -503,7 +519,10 @@ export default function MonthlyScreen() {
                           </View>
 
                           <View className="flex-1">
-                            <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
+                            <Text
+                              className="text-base font-semibold text-foreground"
+                              numberOfLines={1}
+                            >
                               {category?.name || "その他"}
                               {transaction.memo && (
                                 <Text className="text-sm font-normal text-muted">
