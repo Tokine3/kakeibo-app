@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { View, Text, ScrollView, Pressable, Platform } from "react-native";
+import dayjs from "dayjs";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -42,9 +43,14 @@ export default function HomeScreen() {
   const currentMonth = now.getMonth() + 1;
 
   const summary = calculateMonthlySummary(transactions, currentYear, currentMonth);
-  const recentTransactions = transactions
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5);
+
+  const recentTransactions = useMemo(() => {
+    const threeMonthsAgo = dayjs().subtract(3, "month").startOf("day");
+    return transactions
+      .filter((t) => dayjs(t.date).isAfter(threeMonthsAgo) || dayjs(t.date).isSame(threeMonthsAgo, "day"))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 100);
+  }, [transactions]);
 
   const handleAddTransaction = (type: "income" | "expense") => {
     if (Platform.OS !== "web") {
@@ -184,7 +190,12 @@ export default function HomeScreen() {
                 <Text className="text-muted mt-2">取引がありません</Text>
               </View>
             ) : (
-              <View className="gap-2">
+              <ScrollView
+                nestedScrollEnabled
+                style={{ maxHeight: 400 }}
+                contentContainerStyle={{ gap: 8 }}
+                showsVerticalScrollIndicator={recentTransactions.length > 5}
+              >
                 {recentTransactions.map((transaction) => {
                   const category = categories.find((c) => c.id === transaction.categoryId);
                   return (
@@ -250,7 +261,7 @@ export default function HomeScreen() {
                     </Pressable>
                   );
                 })}
-              </View>
+              </ScrollView>
             )}
           </View>
         </View>
