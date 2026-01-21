@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -13,11 +13,13 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { PieChart } from "react-native-chart-kit";
 import { ScreenContainer } from "@/components/screen-container";
 import { TransactionModal } from "@/components/transaction-modal";
+import { SegmentControl, ViewMode } from "@/components/segment-control";
+import { DoublePieChart } from "@/components/double-pie-chart";
 import { useColors } from "@/hooks/use-colors";
 import { getTransactions, getCategories } from "@/lib/storage";
 import {
   calculateMonthlySummary,
-  calculateCategoryExpenses,
+  calculateCategoryData,
   filterTransactionsByMonth,
   formatAmount,
   formatDate,
@@ -38,6 +40,7 @@ export default function MonthlyScreen() {
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
+  const [viewMode, setViewMode] = useState<ViewMode>("all");
 
   const loadData = useCallback(async () => {
     try {
@@ -82,10 +85,26 @@ export default function MonthlyScreen() {
     selectedMonth
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const categoryExpenses = calculateCategoryExpenses(
-    monthTransactions,
-    categories
+  const categoryIncome = useMemo(
+    () => calculateCategoryData(monthTransactions, categories, "income"),
+    [monthTransactions, categories]
   );
+
+  const categoryExpenseData = useMemo(
+    () => calculateCategoryData(monthTransactions, categories, "expense"),
+    [monthTransactions, categories]
+  );
+
+  const filteredTransactions = useMemo(() => {
+    if (viewMode === "all") return monthTransactions;
+    return monthTransactions.filter((t) => t.type === viewMode);
+  }, [monthTransactions, viewMode]);
+
+  const currentCategoryData = useMemo(() => {
+    if (viewMode === "expense") return categoryExpenseData;
+    if (viewMode === "income") return categoryIncome;
+    return [];
+  }, [viewMode, categoryExpenseData, categoryIncome]);
 
   const handlePreviousMonth = () => {
     if (Platform.OS !== "web") {
@@ -139,13 +158,18 @@ export default function MonthlyScreen() {
   const screenWidth = Dimensions.get("window").width;
   const chartWidth = screenWidth - 32;
 
-  const pieChartData = categoryExpenses.slice(0, 6).map((ce) => ({
+  const pieChartData = currentCategoryData.slice(0, 6).map((ce) => ({
     name: `${ce.categoryName} ${formatAmount(ce.amount)} (${ce.percentage.toFixed(1)}%)`,
     amount: ce.amount,
     color: ce.categoryColor,
     legendFontColor: colors.foreground,
     legendFontSize: 12,
   }));
+
+  const sectionTitle = viewMode === "expense" ? "カテゴリ別支出" : viewMode === "income" ? "カテゴリ別収入" : "カテゴリ別内訳";
+  const hasChartData = viewMode === "all"
+    ? categoryExpenseData.length > 0 || categoryIncome.length > 0
+    : currentCategoryData.length > 0;
 
   return (
     <ScreenContainer>
@@ -277,66 +301,157 @@ export default function MonthlyScreen() {
             </View>
           </View>
 
-          {/* Category Expenses Chart */}
-          {categoryExpenses.length > 0 && (
-            <View className="bg-surface rounded-2xl p-4 border border-border">
-              <Text className="text-lg font-bold text-foreground mb-2">
-                カテゴリ別支出
-              </Text>
+          {/* Category Chart */}
+          <View className="bg-surface rounded-2xl p-4 border border-border">
+            <Text className="text-lg font-bold text-foreground mb-2">
+              {sectionTitle}
+            </Text>
 
-              <PieChart
-                data={pieChartData}
-                width={chartWidth - 32}
-                height={180}
-                chartConfig={{
-                  color: (opacity = 1) => colors.primary,
-                  labelColor: (opacity = 1) => colors.foreground,
-                }}
-                accessor="amount"
-                backgroundColor="transparent"
-                paddingLeft={`${(chartWidth - 32) / 2 - 90}`}
-                hasLegend={false}
-                style={{
-                  borderRadius: 16,
-                }}
-              />
-
-              <View className="gap-2">
-                {categoryExpenses.map((ce) => (
-                  <View
-                    key={ce.categoryId}
-                    className="flex-row items-center justify-between"
-                  >
-                    <View className="flex-row items-center flex-1">
-                      <View
-                        style={{
-                          width: 12,
-                          height: 12,
-                          borderRadius: 6,
-                          backgroundColor: ce.categoryColor,
-                          marginRight: 8,
-                        }}
-                      />
-                      <Text className="text-sm text-foreground">
-                        {ce.categoryName}
-                      </Text>
-                    </View>
-                    <Text className="text-sm font-semibold text-foreground">
-                      {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}%)
-                    </Text>
-                  </View>
-                ))}
-              </View>
+            <View style={{ marginBottom: 12 }}>
+              <SegmentControl value={viewMode} onChange={setViewMode} />
             </View>
-          )}
+
+            {hasChartData ? (
+              <>
+                {viewMode === "all" ? (
+                  <DoublePieChart
+                    expenseData={categoryExpenseData}
+                    incomeData={categoryIncome}
+                    width={chartWidth - 32}
+                  />
+                ) : (
+                  <PieChart
+                    data={pieChartData}
+                    width={chartWidth - 32}
+                    height={180}
+                    chartConfig={{
+                      color: (opacity = 1) => colors.primary,
+                      labelColor: (opacity = 1) => colors.foreground,
+                    }}
+                    accessor="amount"
+                    backgroundColor="transparent"
+                    paddingLeft={`${(chartWidth - 32) / 2 - 90}`}
+                    hasLegend={false}
+                    style={{
+                      borderRadius: 16,
+                    }}
+                  />
+                )}
+
+                {viewMode === "all" ? (
+                  <View className="gap-2">
+                    {categoryExpenseData.length > 0 && (
+                      <Text className="text-sm font-semibold text-foreground mt-2" style={{ color: colors.error }}>
+                        支出
+                      </Text>
+                    )}
+                    {categoryExpenseData.map((ce) => (
+                      <View
+                        key={`expense-${ce.categoryId}`}
+                        className="flex-row items-center justify-between"
+                      >
+                        <View className="flex-row items-center flex-1">
+                          <View
+                            style={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: 6,
+                              backgroundColor: ce.categoryColor,
+                              marginRight: 8,
+                            }}
+                          />
+                          <Text className="text-sm text-foreground">
+                            {ce.categoryName}
+                          </Text>
+                        </View>
+                        <Text className="text-sm font-semibold text-foreground">
+                          {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}%)
+                        </Text>
+                      </View>
+                    ))}
+                    {categoryIncome.length > 0 && (
+                      <Text className="text-sm font-semibold text-foreground mt-2" style={{ color: colors.success }}>
+                        収入
+                      </Text>
+                    )}
+                    {categoryIncome.map((ce) => (
+                      <View
+                        key={`income-${ce.categoryId}`}
+                        className="flex-row items-center justify-between"
+                      >
+                        <View className="flex-row items-center flex-1">
+                          <View
+                            style={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: 6,
+                              backgroundColor: ce.categoryColor,
+                              marginRight: 8,
+                            }}
+                          />
+                          <Text className="text-sm text-foreground">
+                            {ce.categoryName}
+                          </Text>
+                        </View>
+                        <Text className="text-sm font-semibold text-foreground">
+                          {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}%)
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <View className="gap-2">
+                    {currentCategoryData.map((ce) => (
+                      <View
+                        key={ce.categoryId}
+                        className="flex-row items-center justify-between"
+                      >
+                        <View className="flex-row items-center flex-1">
+                          <View
+                            style={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: 6,
+                              backgroundColor: ce.categoryColor,
+                              marginRight: 8,
+                            }}
+                          />
+                          <Text className="text-sm text-foreground">
+                            {ce.categoryName}
+                          </Text>
+                        </View>
+                        <Text className="text-sm font-semibold text-foreground">
+                          {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}%)
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </>
+            ) : (
+              <View className="items-center py-6">
+                <MaterialIcons
+                  name="pie-chart"
+                  size={48}
+                  color={colors.muted}
+                />
+                <Text className="text-muted mt-2">データがありません</Text>
+              </View>
+            )}
+          </View>
 
           {/* Transaction List */}
           <View>
             <Text className="text-lg font-bold text-foreground mb-3">
               取引履歴
+              {viewMode !== "all" && (
+                <Text className="text-sm font-normal text-muted">
+                  {" "}({viewMode === "expense" ? "支出" : "収入"}のみ)
+                </Text>
+              )}
             </Text>
 
-            {monthTransactions.length === 0 ? (
+            {filteredTransactions.length === 0 ? (
               <View className="bg-surface rounded-2xl p-6 border border-border items-center">
                 <MaterialIcons
                   name="receipt-long"
@@ -347,7 +462,7 @@ export default function MonthlyScreen() {
               </View>
             ) : (
               <View className="gap-2">
-                {monthTransactions.map((transaction) => {
+                {filteredTransactions.map((transaction) => {
                   const category = categories.find(
                     (c) => c.id === transaction.categoryId
                   );
