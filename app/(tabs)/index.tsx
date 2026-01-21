@@ -232,8 +232,13 @@ export default function HomeScreen() {
                           </View>
 
                           <View className="flex-1">
-                            <Text className="text-base font-semibold text-foreground">
+                            <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
                               {category?.name || "その他"}
+                              {transaction.memo && (
+                                <Text className="text-sm font-normal text-muted">
+                                  （{transaction.memo}）
+                                </Text>
+                              )}
                             </Text>
                             <Text className="text-xs text-muted mt-1">
                               {formatDate(transaction.date)}
@@ -252,12 +257,6 @@ export default function HomeScreen() {
                           {formatAmount(transaction.amount)}
                         </Text>
                       </View>
-                      
-                      {transaction.memo && (
-                        <Text className="text-sm text-muted mt-2" numberOfLines={1}>
-                          {transaction.memo}
-                        </Text>
-                      )}
                     </Pressable>
                   );
                 })}
