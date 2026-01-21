@@ -1,9 +1,16 @@
 import { useState, useCallback } from "react";
-import { View, Text, ScrollView, Pressable, Platform, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  Platform,
+  Dimensions,
+} from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { BarChart } from "react-native-chart-kit";
+import { PieChart } from "react-native-chart-kit";
 import { ScreenContainer } from "@/components/screen-container";
 import { TransactionModal } from "@/components/transaction-modal";
 import { useColors } from "@/hooks/use-colors";
@@ -24,7 +31,9 @@ export default function MonthlyScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | undefined>();
+  const [selectedTransaction, setSelectedTransaction] = useState<
+    Transaction | undefined
+  >();
 
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
@@ -32,7 +41,10 @@ export default function MonthlyScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      const [txns, cats] = await Promise.all([getTransactions(), getCategories()]);
+      const [txns, cats] = await Promise.all([
+        getTransactions(),
+        getCategories(),
+      ]);
       setTransactions(txns);
       setCategories(cats);
     } catch (error) {
@@ -70,7 +82,10 @@ export default function MonthlyScreen() {
     selectedMonth
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const categoryExpenses = calculateCategoryExpenses(monthTransactions, categories);
+  const categoryExpenses = calculateCategoryExpenses(
+    monthTransactions,
+    categories
+  );
 
   const handlePreviousMonth = () => {
     if (Platform.OS !== "web") {
@@ -124,6 +139,14 @@ export default function MonthlyScreen() {
   const screenWidth = Dimensions.get("window").width;
   const chartWidth = screenWidth - 32;
 
+  const pieChartData = categoryExpenses.slice(0, 6).map((ce) => ({
+    name: `${ce.categoryName} ${formatAmount(ce.amount)} (${ce.percentage.toFixed(1)}%)`,
+    amount: ce.amount,
+    color: ce.categoryColor,
+    legendFontColor: colors.foreground,
+    legendFontSize: 12,
+  }));
+
   return (
     <ScreenContainer>
       <ScrollView className="flex-1">
@@ -142,7 +165,11 @@ export default function MonthlyScreen() {
               })}
               onPress={handlePreviousMonth}
             >
-              <MaterialIcons name="chevron-left" size={24} color={colors.foreground} />
+              <MaterialIcons
+                name="chevron-left"
+                size={24}
+                color={colors.foreground}
+              />
             </Pressable>
 
             <Text className="text-2xl font-bold text-foreground">
@@ -161,7 +188,11 @@ export default function MonthlyScreen() {
               })}
               onPress={handleNextMonth}
             >
-              <MaterialIcons name="chevron-right" size={24} color={colors.foreground} />
+              <MaterialIcons
+                name="chevron-right"
+                size={24}
+                color={colors.foreground}
+              />
             </Pressable>
           </View>
 
@@ -172,14 +203,20 @@ export default function MonthlyScreen() {
             <View className="gap-3">
               <View className="flex-row items-center justify-between">
                 <Text className="text-base text-foreground">収入</Text>
-                <Text className="text-lg font-semibold" style={{ color: colors.success }}>
+                <Text
+                  className="text-lg font-semibold"
+                  style={{ color: colors.success }}
+                >
                   {formatAmount(summary.income)}
                 </Text>
               </View>
 
               <View className="flex-row items-center justify-between">
                 <Text className="text-base text-foreground">支出</Text>
-                <Text className="text-lg font-semibold" style={{ color: colors.error }}>
+                <Text
+                  className="text-lg font-semibold"
+                  style={{ color: colors.error }}
+                >
                   {formatAmount(summary.expense)}
                 </Text>
               </View>
@@ -193,7 +230,9 @@ export default function MonthlyScreen() {
               />
 
               <View className="flex-row items-center justify-between">
-                <Text className="text-base font-semibold text-foreground">差額</Text>
+                <Text className="text-base font-semibold text-foreground">
+                  差額
+                </Text>
                 <Text
                   className="text-xl font-bold"
                   style={{
@@ -209,14 +248,25 @@ export default function MonthlyScreen() {
                   <Text className="text-sm text-muted">前月比</Text>
                   <View className="flex-row items-center gap-1">
                     <MaterialIcons
-                      name={summary.changePercentage >= 0 ? "trending-up" : "trending-down"}
+                      name={
+                        summary.changePercentage >= 0
+                          ? "trending-up"
+                          : "trending-down"
+                      }
                       size={16}
-                      color={summary.changePercentage >= 0 ? colors.success : colors.error}
+                      color={
+                        summary.changePercentage >= 0
+                          ? colors.success
+                          : colors.error
+                      }
                     />
                     <Text
                       className="text-sm font-semibold"
                       style={{
-                        color: summary.changePercentage >= 0 ? colors.success : colors.error,
+                        color:
+                          summary.changePercentage >= 0
+                            ? colors.success
+                            : colors.error,
                       }}
                     >
                       {formatPercentage(summary.changePercentage)}
@@ -230,44 +280,28 @@ export default function MonthlyScreen() {
           {/* Category Expenses Chart */}
           {categoryExpenses.length > 0 && (
             <View className="bg-surface rounded-2xl p-4 border border-border">
-              <Text className="text-lg font-bold text-foreground mb-3">
+              <Text className="text-lg font-bold text-foreground mb-2">
                 カテゴリ別支出
               </Text>
 
-              <BarChart
-                data={{
-                  labels: categoryExpenses.slice(0, 5).map((ce) => ce.categoryName),
-                  datasets: [
-                    {
-                      data: categoryExpenses.slice(0, 5).map((ce) => ce.amount),
-                    },
-                  ],
-                }}
+              <PieChart
+                data={pieChartData}
                 width={chartWidth - 32}
-                height={220}
-                yAxisLabel="¥"
-                yAxisSuffix=""
+                height={180}
                 chartConfig={{
-                  backgroundColor: colors.surface,
-                  backgroundGradientFrom: colors.surface,
-                  backgroundGradientTo: colors.surface,
-                  decimalPlaces: 0,
                   color: (opacity = 1) => colors.primary,
                   labelColor: (opacity = 1) => colors.foreground,
-                  style: {
-                    borderRadius: 16,
-                  },
-                  propsForLabels: {
-                    fontSize: 10,
-                  },
                 }}
+                accessor="amount"
+                backgroundColor="transparent"
+                paddingLeft={`${(chartWidth - 32) / 2 - 90}`}
+                hasLegend={false}
                 style={{
-                  marginVertical: 8,
                   borderRadius: 16,
                 }}
               />
 
-              <View className="gap-2 mt-2">
+              <View className="gap-2">
                 {categoryExpenses.map((ce) => (
                   <View
                     key={ce.categoryId}
@@ -283,7 +317,9 @@ export default function MonthlyScreen() {
                           marginRight: 8,
                         }}
                       />
-                      <Text className="text-sm text-foreground">{ce.categoryName}</Text>
+                      <Text className="text-sm text-foreground">
+                        {ce.categoryName}
+                      </Text>
                     </View>
                     <Text className="text-sm font-semibold text-foreground">
                       {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}%)
@@ -296,17 +332,25 @@ export default function MonthlyScreen() {
 
           {/* Transaction List */}
           <View>
-            <Text className="text-lg font-bold text-foreground mb-3">取引履歴</Text>
+            <Text className="text-lg font-bold text-foreground mb-3">
+              取引履歴
+            </Text>
 
             {monthTransactions.length === 0 ? (
               <View className="bg-surface rounded-2xl p-6 border border-border items-center">
-                <MaterialIcons name="receipt-long" size={48} color={colors.muted} />
+                <MaterialIcons
+                  name="receipt-long"
+                  size={48}
+                  color={colors.muted}
+                />
                 <Text className="text-muted mt-2">取引がありません</Text>
               </View>
             ) : (
               <View className="gap-2">
                 {monthTransactions.map((transaction) => {
-                  const category = categories.find((c) => c.id === transaction.categoryId);
+                  const category = categories.find(
+                    (c) => c.id === transaction.categoryId
+                  );
                   return (
                     <Pressable
                       key={transaction.id}
@@ -315,7 +359,10 @@ export default function MonthlyScreen() {
                         borderRadius: 12,
                         padding: 12,
                         borderWidth: 1,
-                        borderColor: transaction.type === "income" ? `${colors.success}80` : `${colors.error}80`,
+                        borderColor:
+                          transaction.type === "income"
+                            ? `${colors.success}80`
+                            : `${colors.error}80`,
                         opacity: pressed ? 0.7 : 1,
                       })}
                       onPress={() => handleEditTransaction(transaction)}
@@ -354,7 +401,9 @@ export default function MonthlyScreen() {
                           className="text-lg font-bold"
                           style={{
                             color:
-                              transaction.type === "income" ? colors.success : colors.error,
+                              transaction.type === "income"
+                                ? colors.success
+                                : colors.error,
                           }}
                         >
                           {transaction.type === "income" ? "+" : "-"}
@@ -363,7 +412,10 @@ export default function MonthlyScreen() {
                       </View>
 
                       {transaction.memo && (
-                        <Text className="text-sm text-muted mt-2" numberOfLines={1}>
+                        <Text
+                          className="text-sm text-muted mt-2"
+                          numberOfLines={1}
+                        >
                           {transaction.memo}
                         </Text>
                       )}

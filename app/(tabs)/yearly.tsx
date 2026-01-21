@@ -1,5 +1,12 @@
 import { useState, useCallback } from "react";
-import { View, Text, ScrollView, Pressable, Platform, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  Platform,
+  Dimensions,
+} from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -28,7 +35,10 @@ export default function YearlyScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      const [txns, cats] = await Promise.all([getTransactions(), getCategories()]);
+      const [txns, cats] = await Promise.all([
+        getTransactions(),
+        getCategories(),
+      ]);
       setTransactions(txns);
       setCategories(cats);
     } catch (error) {
@@ -44,7 +54,10 @@ export default function YearlyScreen() {
     }, [loadData])
   );
 
-  const previousYearTransactions = filterTransactionsByYear(transactions, selectedYear - 1);
+  const previousYearTransactions = filterTransactionsByYear(
+    transactions,
+    selectedYear - 1
+  );
   const summary = calculateYearlySummary(
     transactions,
     selectedYear,
@@ -53,7 +66,10 @@ export default function YearlyScreen() {
 
   const monthlyData = calculateMonthlyData(transactions, selectedYear);
   const yearTransactions = filterTransactionsByYear(transactions, selectedYear);
-  const categoryExpenses = calculateCategoryExpenses(yearTransactions, categories);
+  const categoryExpenses = calculateCategoryExpenses(
+    yearTransactions,
+    categories
+  );
 
   const handlePreviousYear = () => {
     if (Platform.OS !== "web") {
@@ -80,8 +96,8 @@ export default function YearlyScreen() {
   const screenWidth = Dimensions.get("window").width;
   const chartWidth = screenWidth - 32;
 
-  const pieChartData = categoryExpenses.slice(0, 6).map((ce, index) => ({
-    name: ce.categoryName,
+  const pieChartData = categoryExpenses.slice(0, 6).map((ce) => ({
+    name: `${ce.categoryName} ${formatAmount(ce.amount)} (${ce.percentage.toFixed(1)}%)`,
     amount: ce.amount,
     color: ce.categoryColor,
     legendFontColor: colors.foreground,
@@ -106,10 +122,16 @@ export default function YearlyScreen() {
               })}
               onPress={handlePreviousYear}
             >
-              <MaterialIcons name="chevron-left" size={24} color={colors.foreground} />
+              <MaterialIcons
+                name="chevron-left"
+                size={24}
+                color={colors.foreground}
+              />
             </Pressable>
 
-            <Text className="text-2xl font-bold text-foreground">{selectedYear}年</Text>
+            <Text className="text-2xl font-bold text-foreground">
+              {selectedYear}年
+            </Text>
 
             <Pressable
               style={({ pressed }) => ({
@@ -123,7 +145,11 @@ export default function YearlyScreen() {
               })}
               onPress={handleNextYear}
             >
-              <MaterialIcons name="chevron-right" size={24} color={colors.foreground} />
+              <MaterialIcons
+                name="chevron-right"
+                size={24}
+                color={colors.foreground}
+              />
             </Pressable>
           </View>
 
@@ -134,14 +160,20 @@ export default function YearlyScreen() {
             <View className="gap-3">
               <View className="flex-row items-center justify-between">
                 <Text className="text-base text-foreground">収入</Text>
-                <Text className="text-lg font-semibold" style={{ color: colors.success }}>
+                <Text
+                  className="text-lg font-semibold"
+                  style={{ color: colors.success }}
+                >
                   {formatAmount(summary.income)}
                 </Text>
               </View>
 
               <View className="flex-row items-center justify-between">
                 <Text className="text-base text-foreground">支出</Text>
-                <Text className="text-lg font-semibold" style={{ color: colors.error }}>
+                <Text
+                  className="text-lg font-semibold"
+                  style={{ color: colors.error }}
+                >
                   {formatAmount(summary.expense)}
                 </Text>
               </View>
@@ -155,7 +187,9 @@ export default function YearlyScreen() {
               />
 
               <View className="flex-row items-center justify-between">
-                <Text className="text-base font-semibold text-foreground">差額</Text>
+                <Text className="text-base font-semibold text-foreground">
+                  差額
+                </Text>
                 <Text
                   className="text-xl font-bold"
                   style={{
@@ -171,14 +205,25 @@ export default function YearlyScreen() {
                   <Text className="text-sm text-muted">昨年比</Text>
                   <View className="flex-row items-center gap-1">
                     <MaterialIcons
-                      name={summary.changePercentage >= 0 ? "trending-up" : "trending-down"}
+                      name={
+                        summary.changePercentage >= 0
+                          ? "trending-up"
+                          : "trending-down"
+                      }
                       size={16}
-                      color={summary.changePercentage >= 0 ? colors.success : colors.error}
+                      color={
+                        summary.changePercentage >= 0
+                          ? colors.success
+                          : colors.error
+                      }
                     />
                     <Text
                       className="text-sm font-semibold"
                       style={{
-                        color: summary.changePercentage >= 0 ? colors.success : colors.error,
+                        color:
+                          summary.changePercentage >= 0
+                            ? colors.success
+                            : colors.error,
                       }}
                     >
                       {formatPercentage(summary.changePercentage)}
@@ -192,7 +237,9 @@ export default function YearlyScreen() {
           {/* Monthly Line Chart */}
           {monthlyData.some((m) => m.income > 0 || m.expense > 0) && (
             <View className="bg-surface rounded-2xl p-4 border border-border">
-              <Text className="text-lg font-bold text-foreground mb-3">月別収支推移</Text>
+              <Text className="text-lg font-bold text-foreground mb-3">
+                月別収支推移
+              </Text>
 
               <LineChart
                 data={{
@@ -241,29 +288,28 @@ export default function YearlyScreen() {
           {/* Category Pie Chart */}
           {categoryExpenses.length > 0 && (
             <View className="bg-surface rounded-2xl p-4 border border-border">
-              <Text className="text-lg font-bold text-foreground mb-3">
+              <Text className="text-lg font-bold text-foreground mb-2">
                 年間カテゴリ別支出
               </Text>
 
               <PieChart
                 data={pieChartData}
                 width={chartWidth - 32}
-                height={220}
+                height={180}
                 chartConfig={{
                   color: (opacity = 1) => colors.primary,
                   labelColor: (opacity = 1) => colors.foreground,
                 }}
                 accessor="amount"
                 backgroundColor="transparent"
-                paddingLeft="15"
-                absolute
+                paddingLeft={`${(chartWidth - 32) / 2 - 90}`}
+                hasLegend={false}
                 style={{
-                  marginVertical: 8,
                   borderRadius: 16,
                 }}
               />
 
-              <View className="gap-2 mt-4">
+              <View className="gap-2">
                 {categoryExpenses.map((ce) => (
                   <View
                     key={ce.categoryId}
@@ -279,7 +325,9 @@ export default function YearlyScreen() {
                           marginRight: 8,
                         }}
                       />
-                      <Text className="text-sm text-foreground">{ce.categoryName}</Text>
+                      <Text className="text-sm text-foreground">
+                        {ce.categoryName}
+                      </Text>
                     </View>
                     <Text className="text-sm font-semibold text-foreground">
                       {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}%)
@@ -292,7 +340,9 @@ export default function YearlyScreen() {
 
           {/* Monthly Breakdown */}
           <View className="bg-surface rounded-2xl p-4 border border-border">
-            <Text className="text-lg font-bold text-foreground mb-3">月別詳細</Text>
+            <Text className="text-lg font-bold text-foreground mb-3">
+              月別詳細
+            </Text>
 
             <View className="gap-2">
               {monthlyData.map((data) => (
@@ -313,7 +363,8 @@ export default function YearlyScreen() {
                     <Text
                       className="text-sm font-semibold mt-1"
                       style={{
-                        color: data.balance >= 0 ? colors.success : colors.error,
+                        color:
+                          data.balance >= 0 ? colors.success : colors.error,
                       }}
                     >
                       差額: {formatAmount(data.balance)}
