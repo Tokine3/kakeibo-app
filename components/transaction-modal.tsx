@@ -9,15 +9,23 @@ import {
   Platform,
   Alert,
   Keyboard,
+  KeyboardAvoidingView,
 } from "react-native";
-import type { TextInput as TextInputType } from "react-native";
+import type {
+  TextInput as TextInputType,
+  ScrollView as ScrollViewType,
+} from "react-native";
 import * as Haptics from "expo-haptics";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import dayjs from "dayjs";
 import { useColors } from "@/hooks/use-colors";
 import { CalendarPicker } from "@/components/calendar-picker";
 import type { Transaction, TransactionType, Category } from "@/types";
-import { saveTransaction, updateTransaction, deleteTransaction } from "@/lib/storage";
+import {
+  saveTransaction,
+  updateTransaction,
+  deleteTransaction,
+} from "@/lib/storage";
 
 interface TransactionModalProps {
   visible: boolean;
@@ -39,6 +47,7 @@ export function TransactionModal({
   const colors = useColors();
   const isEdit = !!transaction;
   const amountInputRef = useRef<TextInputType>(null);
+  const scrollViewRef = useRef<ScrollViewType>(null);
 
   const [type, setType] = useState<TransactionType>("expense");
   const [amount, setAmount] = useState(""); // カンマなしの数値文字列
@@ -167,7 +176,11 @@ export function TransactionModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1, backgroundColor: colors.background }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
+      >
         {/* Header */}
         <View
           style={{
@@ -181,33 +194,52 @@ export function TransactionModal({
           }}
         >
           <Pressable
-            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+            style={({ pressed }) => ({
+              opacity: pressed ? 0.6 : 1,
+              minWidth: 80,
+            })}
             onPress={onClose}
           >
-            <Text style={{ fontSize: 16, color: colors.primary }}>キャンセル</Text>
-          </Pressable>
-          <Text style={{ fontSize: 18, fontWeight: "bold", color: colors.foreground }}>
-            {isEdit ? "取引を編集" : "取引を追加"}
-          </Text>
-          <Pressable
-            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-            onPress={handleSave}
-          >
-            <Text style={{ fontSize: 16, color: colors.primary, fontWeight: "600" }}>
-              保存
+            <Text style={{ fontSize: 16, color: colors.primary }}>
+              キャンセル
             </Text>
           </Pressable>
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: "bold",
+              color: colors.foreground,
+            }}
+          >
+            {isEdit ? "取引を編集" : "取引を追加"}
+          </Text>
+          {isEdit ? (
+            <Pressable
+              style={({ pressed }) => ({
+                opacity: pressed ? 0.6 : 1,
+                minWidth: 80,
+                alignItems: "flex-end",
+              })}
+              onPress={handleDelete}
+            >
+              <MaterialIcons name="delete" size={24} color={colors.error} />
+            </Pressable>
+          ) : (
+            <View style={{ minWidth: 80 }} />
+          )}
         </View>
-
         <ScrollView
+          ref={scrollViewRef}
           style={{ flex: 1 }}
           keyboardShouldPersistTaps="handled"
-          onScrollBeginDrag={Keyboard.dismiss}
+          contentContainerStyle={{ flexGrow: 1 }}
         >
           <View style={{ padding: 16, gap: 24 }}>
             {/* Type Selector */}
             <View>
-              <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 8 }}>
+              <Text
+                style={{ fontSize: 14, color: colors.muted, marginBottom: 8 }}
+              >
                 タイプ
               </Text>
               <View style={{ flexDirection: "row", gap: 12 }}>
@@ -217,7 +249,8 @@ export function TransactionModal({
                     paddingVertical: 12,
                     borderRadius: 12,
                     alignItems: "center",
-                    backgroundColor: type === "expense" ? colors.error : colors.surface,
+                    backgroundColor:
+                      type === "expense" ? colors.error : colors.surface,
                     opacity: pressed ? 0.7 : 1,
                   })}
                   onPress={() => {
@@ -246,7 +279,8 @@ export function TransactionModal({
                     paddingVertical: 12,
                     borderRadius: 12,
                     alignItems: "center",
-                    backgroundColor: type === "income" ? colors.success : colors.surface,
+                    backgroundColor:
+                      type === "income" ? colors.success : colors.surface,
                     opacity: pressed ? 0.7 : 1,
                   })}
                   onPress={() => {
@@ -272,7 +306,9 @@ export function TransactionModal({
 
             {/* Amount Input */}
             <View>
-              <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 8 }}>
+              <Text
+                style={{ fontSize: 14, color: colors.muted, marginBottom: 8 }}
+              >
                 金額
               </Text>
               <View
@@ -287,7 +323,13 @@ export function TransactionModal({
                   borderColor: isAmountFocused ? colors.primary : colors.border,
                 }}
               >
-                <Text style={{ fontSize: 24, color: colors.foreground, marginRight: 8 }}>
+                <Text
+                  style={{
+                    fontSize: 24,
+                    color: colors.foreground,
+                    marginRight: 8,
+                  }}
+                >
                   ¥
                 </Text>
                 <TextInput
@@ -323,7 +365,13 @@ export function TransactionModal({
                       }
                     }}
                   >
-                    <Text style={{ color: "#FFFFFF", fontSize: 14, fontWeight: "600" }}>
+                    <Text
+                      style={{
+                        color: "#FFFFFF",
+                        fontSize: 14,
+                        fontWeight: "600",
+                      }}
+                    >
                       完了
                     </Text>
                   </Pressable>
@@ -333,7 +381,9 @@ export function TransactionModal({
 
             {/* Category Selector */}
             <View>
-              <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 8 }}>
+              <Text
+                style={{ fontSize: 14, color: colors.muted, marginBottom: 8 }}
+              >
                 カテゴリ
               </Text>
               <View style={{ gap: 8 }}>
@@ -348,15 +398,21 @@ export function TransactionModal({
                         padding: 12,
                         borderRadius: 12,
                         backgroundColor:
-                          categoryId === category.id ? colors.primary : colors.surface,
+                          categoryId === category.id
+                            ? colors.primary
+                            : colors.surface,
                         borderWidth: 1,
                         borderColor:
-                          categoryId === category.id ? colors.primary : colors.border,
+                          categoryId === category.id
+                            ? colors.primary
+                            : colors.border,
                         opacity: pressed ? 0.7 : 1,
                       })}
                       onPress={() => {
                         if (Platform.OS !== "web") {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          Haptics.impactAsync(
+                            Haptics.ImpactFeedbackStyle.Light,
+                          );
                         }
                         setCategoryId(category.id);
                       }}
@@ -382,7 +438,9 @@ export function TransactionModal({
                         style={{
                           fontSize: 16,
                           color:
-                            categoryId === category.id ? "#FFFFFF" : colors.foreground,
+                            categoryId === category.id
+                              ? "#FFFFFF"
+                              : colors.foreground,
                         }}
                       >
                         {category.name}
@@ -394,7 +452,9 @@ export function TransactionModal({
 
             {/* Date Input */}
             <View>
-              <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 8 }}>
+              <Text
+                style={{ fontSize: 14, color: colors.muted, marginBottom: 8 }}
+              >
                 日付
               </Text>
               <CalendarPicker value={date} onChange={setDate} />
@@ -402,7 +462,9 @@ export function TransactionModal({
 
             {/* Memo Input */}
             <View>
-              <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 8 }}>
+              <Text
+                style={{ fontSize: 14, color: colors.muted, marginBottom: 8 }}
+              >
                 メモ (オプション)
               </Text>
               <TextInput
@@ -423,30 +485,43 @@ export function TransactionModal({
                 placeholder="メモを入力..."
                 placeholderTextColor={colors.muted}
                 multiline
+                onFocus={() => {
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                  }, 100);
+                }}
               />
             </View>
-
-            {/* Delete Button (for edit mode) */}
-            {isEdit && (
-              <Pressable
-                style={({ pressed }) => ({
-                  paddingVertical: 12,
-                  borderRadius: 12,
-                  alignItems: "center",
-                  backgroundColor: colors.error,
-                  opacity: pressed ? 0.7 : 1,
-                  marginTop: 16,
-                })}
-                onPress={handleDelete}
-              >
-                <Text style={{ fontSize: 16, fontWeight: "600", color: "#FFFFFF" }}>
-                  削除
-                </Text>
-              </Pressable>
-            )}
           </View>
         </ScrollView>
-      </View>
+
+        {/* Footer with Save Button */}
+        <View
+          style={{
+            paddingHorizontal: 16,
+            paddingTop: 12,
+            paddingBottom: 32,
+            borderTopWidth: 1,
+            borderTopColor: colors.border,
+            backgroundColor: colors.background,
+          }}
+        >
+          <Pressable
+            style={({ pressed }) => ({
+              paddingVertical: 16,
+              borderRadius: 12,
+              alignItems: "center",
+              backgroundColor: colors.primary,
+              opacity: pressed ? 0.7 : 1,
+            })}
+            onPress={handleSave}
+          >
+            <Text style={{ fontSize: 16, fontWeight: "600", color: "#FFFFFF" }}>
+              保存
+            </Text>
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
