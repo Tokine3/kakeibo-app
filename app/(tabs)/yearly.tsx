@@ -54,17 +54,17 @@ export default function YearlyScreen() {
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [loadData])
+    }, [loadData]),
   );
 
   const previousYearTransactions = filterTransactionsByYear(
     transactions,
-    selectedYear - 1
+    selectedYear - 1,
   );
   const summary = calculateYearlySummary(
     transactions,
     selectedYear,
-    previousYearTransactions
+    previousYearTransactions,
   );
 
   const monthlyData = calculateMonthlyData(transactions, selectedYear);
@@ -72,12 +72,12 @@ export default function YearlyScreen() {
 
   const categoryIncome = useMemo(
     () => calculateCategoryData(yearTransactions, categories, "income"),
-    [yearTransactions, categories]
+    [yearTransactions, categories],
   );
 
   const categoryExpenseData = useMemo(
     () => calculateCategoryData(yearTransactions, categories, "expense"),
-    [yearTransactions, categories]
+    [yearTransactions, categories],
   );
 
   const currentCategoryData = useMemo(() => {
@@ -452,7 +452,7 @@ export default function YearlyScreen() {
               <View className="items-center py-6">
                 <MaterialIcons
                   name="pie-chart"
-                  size={48}
+                  size={52}
                   color={colors.muted}
                 />
                 <Text className="text-muted mt-2">データがありません</Text>

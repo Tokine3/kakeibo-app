@@ -1,5 +1,6 @@
 import { View, Text } from "react-native";
 import { PieChart } from "react-native-chart-kit";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useColors } from "@/hooks/use-colors";
 import type { CategoryExpense } from "@/types";
 import { formatAmount } from "@/lib/calculations";
@@ -90,8 +91,9 @@ export function DoublePieChart({
               justifyContent: "center",
             }}
           >
-            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
-              データなし
+            <MaterialIcons name="pie-chart" size={52} color={colors.muted} />
+            <Text style={{ color: colors.muted, marginTop: 4 }}>
+              データがありません
             </Text>
           </View>
         )}
@@ -132,8 +134,9 @@ export function DoublePieChart({
               justifyContent: "center",
             }}
           >
-            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
-              データなし
+            <MaterialIcons name="pie-chart" size={52} color={colors.muted} />
+            <Text style={{ color: colors.muted, marginTop: 4 }}>
+              データがありません
             </Text>
           </View>
         )}

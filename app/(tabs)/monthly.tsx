@@ -60,7 +60,7 @@ export default function MonthlyScreen() {
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [loadData])
+    }, [loadData]),
   );
 
   const previousMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
@@ -69,30 +69,30 @@ export default function MonthlyScreen() {
   const previousMonthTransactions = filterTransactionsByMonth(
     transactions,
     previousYear,
-    previousMonth
+    previousMonth,
   );
 
   const summary = calculateMonthlySummary(
     transactions,
     selectedYear,
     selectedMonth,
-    previousMonthTransactions
+    previousMonthTransactions,
   );
 
   const monthTransactions = filterTransactionsByMonth(
     transactions,
     selectedYear,
-    selectedMonth
+    selectedMonth,
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const categoryIncome = useMemo(
     () => calculateCategoryData(monthTransactions, categories, "income"),
-    [monthTransactions, categories]
+    [monthTransactions, categories],
   );
 
   const categoryExpenseData = useMemo(
     () => calculateCategoryData(monthTransactions, categories, "expense"),
-    [monthTransactions, categories]
+    [monthTransactions, categories],
   );
 
   const filteredTransactions = useMemo(() => {
@@ -449,7 +449,7 @@ export default function MonthlyScreen() {
               <View className="items-center py-6">
                 <MaterialIcons
                   name="pie-chart"
-                  size={48}
+                  size={52}
                   color={colors.muted}
                 />
                 <Text className="text-muted mt-2">データがありません</Text>
@@ -473,7 +473,7 @@ export default function MonthlyScreen() {
               <View className="bg-surface rounded-2xl p-6 border border-border items-center">
                 <MaterialIcons
                   name="receipt-long"
-                  size={48}
+                  size={52}
                   color={colors.muted}
                 />
                 <Text className="text-muted mt-2">取引がありません</Text>
@@ -482,7 +482,7 @@ export default function MonthlyScreen() {
               <View className="gap-2">
                 {filteredTransactions.map((transaction) => {
                   const category = categories.find(
-                    (c) => c.id === transaction.categoryId
+                    (c) => c.id === transaction.categoryId,
                   );
                   return (
                     <Pressable
@@ -521,17 +521,23 @@ export default function MonthlyScreen() {
                           </View>
 
                           <View className="flex-1">
-                            <Text
-                              className="text-base font-semibold text-foreground"
-                              numberOfLines={1}
-                            >
-                              {category?.name || "その他"}
+                            <View className="flex-row items-end flex-wrap gap-3">
+                              <Text
+                                className="text-base font-semibold text-foreground"
+                                numberOfLines={1}
+                              >
+                                {category?.name || "その他"}
+                              </Text>
                               {transaction.memo && (
-                                <Text className="text-sm font-normal text-muted">
-                                  （{transaction.memo}）
+                                <Text
+                                  className="text-sm font-normal text-muted"
+                                  numberOfLines={1}
+                                >
+                                  <MaterialIcons name="description" />
+                                  {transaction.memo}
                                 </Text>
                               )}
-                            </Text>
+                            </View>
                             <Text className="text-xs text-muted mt-1">
                               {formatDate(transaction.date)}
                             </Text>

@@ -223,7 +223,7 @@ export default function HomeScreen() {
               <View className="bg-surface rounded-2xl p-6 border border-border items-center">
                 <MaterialIcons
                   name="receipt-long"
-                  size={48}
+                  size={52}
                   color={colors.muted}
                 />
                 <Text className="text-muted mt-2">取引がありません</Text>
@@ -276,18 +276,23 @@ export default function HomeScreen() {
                           </View>
 
                           <View className="flex-1">
-                            <Text
-                              className="text-base font-semibold text-foreground"
-                              numberOfLines={1}
-                            >
-                              {category?.name || "その他"}
+                            <View className="flex-row items-end flex-wrap gap-3">
+                              <Text
+                                className="text-base font-semibold text-foreground"
+                                numberOfLines={1}
+                              >
+                                {category?.name || "その他"}
+                              </Text>
                               {transaction.memo && (
-                                <Text className="text-sm font-normal text-muted">
+                                <Text
+                                  className="text-sm font-normal text-muted"
+                                  numberOfLines={1}
+                                >
                                   <MaterialIcons name="description" />
                                   {transaction.memo}
                                 </Text>
                               )}
-                            </Text>
+                            </View>
                             <Text className="text-xs text-muted mt-1">
                               {formatDate(transaction.date)}
                             </Text>
