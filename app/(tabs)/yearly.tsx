@@ -271,7 +271,20 @@ export default function YearlyScreen() {
 
               <LineChart
                 data={{
-                  labels: ["1月", "3月", "5月", "7月", "9月", "11月"],
+                  labels: [
+                    "1月",
+                    "2月",
+                    "3月",
+                    "4月",
+                    "5月",
+                    "6月",
+                    "7月",
+                    "8月",
+                    "9月",
+                    "10月",
+                    "11月",
+                    "12月",
+                  ],
                   datasets: [
                     {
                       data: monthlyData.map((m) => m.income),
@@ -287,9 +300,17 @@ export default function YearlyScreen() {
                   legend: ["収入", "支出"],
                 }}
                 width={chartWidth - 32}
-                height={220}
+                height={240}
                 yAxisLabel="¥"
                 yAxisSuffix=""
+                segments={5}
+                formatYLabel={(value) => {
+                  const num = Number(value);
+                  if (num >= 10000) {
+                    return `${(num / 10000).toLocaleString("ja-JP")}万`;
+                  }
+                  return num.toLocaleString("ja-JP");
+                }}
                 chartConfig={{
                   backgroundColor: colors.surface,
                   backgroundGradientFrom: colors.surface,
@@ -303,10 +324,11 @@ export default function YearlyScreen() {
                   propsForLabels: {
                     fontSize: 10,
                   },
+                  paddingRight: 32,
                 }}
                 bezier
                 style={{
-                  marginVertical: 8,
+                  marginVertical: 2,
                   borderRadius: 16,
                 }}
               />
