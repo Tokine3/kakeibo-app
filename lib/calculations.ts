@@ -130,22 +130,22 @@ export function calculateCategoryExpenses(
 ): CategoryExpense[] {
   const expenses = transactions.filter((t) => t.type === "expense");
   const totalExpense = expenses.reduce((sum, t) => sum + t.amount, 0);
-  
+
   if (totalExpense === 0) {
     return [];
   }
-  
+
   const categoryMap = new Map<string, number>();
-  
+
   expenses.forEach((t) => {
     if (t.categoryId) {
       const current = categoryMap.get(t.categoryId) || 0;
       categoryMap.set(t.categoryId, current + t.amount);
     }
   });
-  
+
   const result: CategoryExpense[] = [];
-  
+
   categoryMap.forEach((amount, categoryId) => {
     const category = categories.find((c) => c.id === categoryId);
     if (category) {
@@ -159,10 +159,56 @@ export function calculateCategoryExpenses(
       });
     }
   });
-  
+
   // 金額の大きい順にソート
   result.sort((a, b) => b.amount - a.amount);
-  
+
+  return result;
+}
+
+/**
+ * カテゴリ別データを計算（収入/支出を指定可能）
+ */
+export function calculateCategoryData(
+  transactions: Transaction[],
+  categories: Category[],
+  type: "income" | "expense"
+): CategoryExpense[] {
+  const filtered = transactions.filter((t) => t.type === type);
+  const total = filtered.reduce((sum, t) => sum + t.amount, 0);
+
+  if (total === 0) {
+    return [];
+  }
+
+  const categoryMap = new Map<string, number>();
+
+  filtered.forEach((t) => {
+    if (t.categoryId) {
+      const current = categoryMap.get(t.categoryId) || 0;
+      categoryMap.set(t.categoryId, current + t.amount);
+    }
+  });
+
+  const result: CategoryExpense[] = [];
+
+  categoryMap.forEach((amount, categoryId) => {
+    const category = categories.find((c) => c.id === categoryId);
+    if (category) {
+      result.push({
+        categoryId,
+        categoryName: category.name,
+        categoryIcon: category.icon,
+        categoryColor: category.color,
+        amount,
+        percentage: (amount / total) * 100,
+      });
+    }
+  });
+
+  // 金額の大きい順にソート
+  result.sort((a, b) => b.amount - a.amount);
+
   return result;
 }
 

@@ -8,7 +8,11 @@ import { ScreenContainer } from "@/components/screen-container";
 import { TransactionModal } from "@/components/transaction-modal";
 import { useColors } from "@/hooks/use-colors";
 import { getTransactions, getCategories } from "@/lib/storage";
-import { calculateMonthlySummary, formatAmount, formatDate } from "@/lib/calculations";
+import {
+  calculateMonthlySummary,
+  formatAmount,
+  formatDate,
+} from "@/lib/calculations";
 import type { Transaction, Category } from "@/types";
 
 export default function HomeScreen() {
@@ -18,11 +22,16 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState<"income" | "expense">("expense");
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | undefined>();
+  const [selectedTransaction, setSelectedTransaction] = useState<
+    Transaction | undefined
+  >();
 
   const loadData = useCallback(async () => {
     try {
-      const [txns, cats] = await Promise.all([getTransactions(), getCategories()]);
+      const [txns, cats] = await Promise.all([
+        getTransactions(),
+        getCategories(),
+      ]);
       setTransactions(txns);
       setCategories(cats);
     } catch (error) {
@@ -35,19 +44,27 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [loadData])
+    }, [loadData]),
   );
 
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
 
-  const summary = calculateMonthlySummary(transactions, currentYear, currentMonth);
+  const summary = calculateMonthlySummary(
+    transactions,
+    currentYear,
+    currentMonth,
+  );
 
   const recentTransactions = useMemo(() => {
     const threeMonthsAgo = dayjs().subtract(3, "month").startOf("day");
     return transactions
-      .filter((t) => dayjs(t.date).isAfter(threeMonthsAgo) || dayjs(t.date).isSame(threeMonthsAgo, "day"))
+      .filter(
+        (t) =>
+          dayjs(t.date).isAfter(threeMonthsAgo) ||
+          dayjs(t.date).isSame(threeMonthsAgo, "day"),
+      )
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 100);
   }, [transactions]);
@@ -101,22 +118,28 @@ export default function HomeScreen() {
           {/* Summary Card */}
           <View className="bg-surface rounded-2xl p-4 border border-border">
             <Text className="text-sm text-muted mb-3">今月の収支</Text>
-            
+
             <View className="gap-3">
               <View className="flex-row items-center justify-between">
                 <Text className="text-base text-foreground">収入</Text>
-                <Text className="text-lg font-semibold" style={{ color: colors.success }}>
+                <Text
+                  className="text-lg font-semibold"
+                  style={{ color: colors.success }}
+                >
                   {formatAmount(summary.income)}
                 </Text>
               </View>
-              
+
               <View className="flex-row items-center justify-between">
                 <Text className="text-base text-foreground">支出</Text>
-                <Text className="text-lg font-semibold" style={{ color: colors.error }}>
+                <Text
+                  className="text-lg font-semibold"
+                  style={{ color: colors.error }}
+                >
                   {formatAmount(summary.expense)}
                 </Text>
               </View>
-              
+
               <View
                 style={{
                   height: 1,
@@ -124,16 +147,20 @@ export default function HomeScreen() {
                   marginVertical: 4,
                 }}
               />
-              
+
               <View className="flex-row items-center justify-between">
-                <Text className="text-base font-semibold text-foreground">差額</Text>
+                <Text className="text-base font-semibold text-foreground">
+                  収支
+                </Text>
                 <Text
                   className="text-xl font-bold"
                   style={{
                     color: summary.balance >= 0 ? colors.success : colors.error,
                   }}
                 >
-                  {formatAmount(summary.balance)}
+                  {summary.balance >= 0
+                    ? `+${formatAmount(summary.balance)}`
+                    : formatAmount(summary.balance)}
                 </Text>
               </View>
             </View>
@@ -154,7 +181,10 @@ export default function HomeScreen() {
             >
               <View className="flex-row items-center gap-2">
                 <MaterialIcons name="add" size={20} color="#FFFFFF" />
-                <Text className="text-base font-semibold" style={{ color: "#FFFFFF" }}>
+                <Text
+                  className="text-base font-semibold"
+                  style={{ color: "#FFFFFF" }}
+                >
                   収入を追加
                 </Text>
               </View>
@@ -173,7 +203,10 @@ export default function HomeScreen() {
             >
               <View className="flex-row items-center gap-2">
                 <MaterialIcons name="remove" size={20} color="#FFFFFF" />
-                <Text className="text-base font-semibold" style={{ color: "#FFFFFF" }}>
+                <Text
+                  className="text-base font-semibold"
+                  style={{ color: "#FFFFFF" }}
+                >
                   支出を追加
                 </Text>
               </View>
@@ -182,11 +215,17 @@ export default function HomeScreen() {
 
           {/* Recent Transactions */}
           <View>
-            <Text className="text-lg font-bold text-foreground mb-3">最近の取引</Text>
-            
+            <Text className="text-lg font-bold text-foreground mb-3">
+              最近の取引
+            </Text>
+
             {recentTransactions.length === 0 ? (
               <View className="bg-surface rounded-2xl p-6 border border-border items-center">
-                <MaterialIcons name="receipt-long" size={48} color={colors.muted} />
+                <MaterialIcons
+                  name="receipt-long"
+                  size={52}
+                  color={colors.muted}
+                />
                 <Text className="text-muted mt-2">取引がありません</Text>
               </View>
             ) : (
@@ -197,7 +236,9 @@ export default function HomeScreen() {
                 showsVerticalScrollIndicator={recentTransactions.length > 5}
               >
                 {recentTransactions.map((transaction) => {
-                  const category = categories.find((c) => c.id === transaction.categoryId);
+                  const category = categories.find(
+                    (c) => c.id === transaction.categoryId,
+                  );
                   return (
                     <Pressable
                       key={transaction.id}
@@ -206,7 +247,10 @@ export default function HomeScreen() {
                         borderRadius: 12,
                         padding: 12,
                         borderWidth: 1,
-                        borderColor: transaction.type === "income" ? `${colors.success}80` : `${colors.error}80`,
+                        borderColor:
+                          transaction.type === "income"
+                            ? `${colors.success}80`
+                            : `${colors.error}80`,
                         opacity: pressed ? 0.7 : 1,
                       })}
                       onPress={() => handleEditTransaction(transaction)}
@@ -232,32 +276,42 @@ export default function HomeScreen() {
                           </View>
 
                           <View className="flex-1">
-                            <Text className="text-base font-semibold text-foreground">
-                              {category?.name || "その他"}
-                            </Text>
+                            <View className="flex-row items-end flex-wrap gap-3">
+                              <Text
+                                className="text-base font-semibold text-foreground"
+                                numberOfLines={1}
+                              >
+                                {category?.name || "その他"}
+                              </Text>
+                              {transaction.memo && (
+                                <Text
+                                  className="text-sm font-normal text-muted"
+                                  numberOfLines={1}
+                                >
+                                  <MaterialIcons name="description" />
+                                  {transaction.memo}
+                                </Text>
+                              )}
+                            </View>
                             <Text className="text-xs text-muted mt-1">
                               {formatDate(transaction.date)}
                             </Text>
                           </View>
                         </View>
-                        
+
                         <Text
                           className="text-lg font-bold"
                           style={{
                             color:
-                              transaction.type === "income" ? colors.success : colors.error,
+                              transaction.type === "income"
+                                ? colors.success
+                                : colors.error,
                           }}
                         >
                           {transaction.type === "income" ? "+" : "-"}
                           {formatAmount(transaction.amount)}
                         </Text>
                       </View>
-                      
-                      {transaction.memo && (
-                        <Text className="text-sm text-muted mt-2" numberOfLines={1}>
-                          {transaction.memo}
-                        </Text>
-                      )}
                     </Pressable>
                   );
                 })}
