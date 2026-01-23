@@ -44,7 +44,7 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [loadData])
+    }, [loadData]),
   );
 
   const now = new Date();
@@ -54,7 +54,7 @@ export default function HomeScreen() {
   const summary = calculateMonthlySummary(
     transactions,
     currentYear,
-    currentMonth
+    currentMonth,
   );
 
   const recentTransactions = useMemo(() => {
@@ -63,7 +63,7 @@ export default function HomeScreen() {
       .filter(
         (t) =>
           dayjs(t.date).isAfter(threeMonthsAgo) ||
-          dayjs(t.date).isSame(threeMonthsAgo, "day")
+          dayjs(t.date).isSame(threeMonthsAgo, "day"),
       )
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 100);
@@ -237,7 +237,7 @@ export default function HomeScreen() {
               >
                 {recentTransactions.map((transaction) => {
                   const category = categories.find(
-                    (c) => c.id === transaction.categoryId
+                    (c) => c.id === transaction.categoryId,
                   );
                   return (
                     <Pressable
@@ -283,7 +283,8 @@ export default function HomeScreen() {
                               {category?.name || "その他"}
                               {transaction.memo && (
                                 <Text className="text-sm font-normal text-muted">
-                                  （{transaction.memo}）
+                                  <MaterialIcons name="description" />
+                                  {transaction.memo}
                                 </Text>
                               )}
                             </Text>
