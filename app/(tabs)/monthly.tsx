@@ -179,53 +179,62 @@ export default function MonthlyScreen() {
 
   return (
     <ScreenContainer>
+      {/* Header with Month Selector - 固定 */}
+      <View
+        className="flex-row items-center justify-between px-4"
+        style={{
+          backgroundColor: colors.background,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          paddingTop: 12,
+          paddingBottom: 12,
+        }}
+      >
+        <Pressable
+          style={({ pressed }) => ({
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: colors.surface,
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: pressed ? 0.6 : 1,
+          })}
+          onPress={handlePreviousMonth}
+        >
+          <MaterialIcons
+            name="chevron-left"
+            size={24}
+            color={colors.foreground}
+          />
+        </Pressable>
+
+        <Text className="text-2xl font-bold text-foreground">
+          {selectedYear}年{selectedMonth}月
+        </Text>
+
+        <Pressable
+          style={({ pressed }) => ({
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: colors.surface,
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: pressed ? 0.6 : 1,
+          })}
+          onPress={handleNextMonth}
+        >
+          <MaterialIcons
+            name="chevron-right"
+            size={24}
+            color={colors.foreground}
+          />
+        </Pressable>
+      </View>
+
       <ScrollView className="flex-1">
         <View className="p-4 gap-4">
-          {/* Header with Month Selector */}
-          <View className="flex-row items-center justify-between">
-            <Pressable
-              style={({ pressed }) => ({
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                backgroundColor: colors.surface,
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: pressed ? 0.6 : 1,
-              })}
-              onPress={handlePreviousMonth}
-            >
-              <MaterialIcons
-                name="chevron-left"
-                size={24}
-                color={colors.foreground}
-              />
-            </Pressable>
-
-            <Text className="text-2xl font-bold text-foreground">
-              {selectedYear}年{selectedMonth}月
-            </Text>
-
-            <Pressable
-              style={({ pressed }) => ({
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                backgroundColor: colors.surface,
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: pressed ? 0.6 : 1,
-              })}
-              onPress={handleNextMonth}
-            >
-              <MaterialIcons
-                name="chevron-right"
-                size={24}
-                color={colors.foreground}
-              />
-            </Pressable>
-          </View>
-
           {/* Summary Card */}
           <View className="bg-surface rounded-2xl p-4 border border-border">
             <Text className="text-sm text-muted mb-3">月間収支</Text>
@@ -521,7 +530,7 @@ export default function MonthlyScreen() {
                           </View>
 
                           <View className="flex-1">
-                            <View className="flex-row items-end flex-wrap gap-3">
+                            <View className="flex-row items-end gap-2">
                               <Text
                                 className="text-base font-semibold text-foreground"
                                 numberOfLines={1}
@@ -530,8 +539,9 @@ export default function MonthlyScreen() {
                               </Text>
                               {transaction.memo && (
                                 <Text
-                                  className="text-sm font-normal text-muted"
+                                  className="text-sm font-normal text-muted flex-1"
                                   numberOfLines={1}
+                                  ellipsizeMode="tail"
                                 >
                                   <MaterialIcons name="description" />
                                   {transaction.memo}
@@ -553,7 +563,6 @@ export default function MonthlyScreen() {
                                 : colors.error,
                           }}
                         >
-                          {transaction.type === "income" ? "+" : "-"}
                           {formatAmount(transaction.amount)}
                         </Text>
                       </View>

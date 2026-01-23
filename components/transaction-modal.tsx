@@ -250,6 +250,35 @@ export function TransactionModal({
                     borderRadius: 12,
                     alignItems: "center",
                     backgroundColor:
+                      type === "income" ? colors.success : colors.surface,
+                    opacity: pressed ? 0.7 : 1,
+                  })}
+                  onPress={() => {
+                    if (Platform.OS !== "web") {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
+                    setType("income");
+                    setCategoryId(undefined);
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: "600",
+                      color: type === "income" ? "#FFFFFF" : colors.foreground,
+                    }}
+                  >
+                    収入
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    paddingVertical: 12,
+                    borderRadius: 12,
+                    alignItems: "center",
+                    backgroundColor:
                       type === "expense" ? colors.error : colors.surface,
                     opacity: pressed ? 0.7 : 1,
                   })}
@@ -271,34 +300,6 @@ export function TransactionModal({
                     }}
                   >
                     支出
-                  </Text>
-                </Pressable>
-                <Pressable
-                  style={({ pressed }) => ({
-                    flex: 1,
-                    paddingVertical: 12,
-                    borderRadius: 12,
-                    alignItems: "center",
-                    backgroundColor:
-                      type === "income" ? colors.success : colors.surface,
-                    opacity: pressed ? 0.7 : 1,
-                  })}
-                  onPress={() => {
-                    if (Platform.OS !== "web") {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }
-                    setType("income");
-                    setCategoryId(undefined);
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      fontWeight: "600",
-                      color: type === "income" ? "#FFFFFF" : colors.foreground,
-                    }}
-                  >
-                    収入
                   </Text>
                 </Pressable>
               </View>

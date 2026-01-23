@@ -15,7 +15,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { SegmentControl, ViewMode } from "@/components/segment-control";
 import { DoublePieChart } from "@/components/double-pie-chart";
 import { useColors } from "@/hooks/use-colors";
-import { getTransactions, getCategories } from "@/lib/storage";
+import { getTransactions, getCategories, saveTransaction } from "@/lib/storage";
 import {
   calculateYearlySummary,
   calculateMonthlyData,
@@ -132,53 +132,62 @@ export default function YearlyScreen() {
 
   return (
     <ScreenContainer>
+      {/* Header with Year Selector - 固定 */}
+      <View
+        className="flex-row items-center justify-between px-4"
+        style={{
+          backgroundColor: colors.background,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          paddingTop: 12,
+          paddingBottom: 12,
+        }}
+      >
+        <Pressable
+          style={({ pressed }) => ({
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: colors.surface,
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: pressed ? 0.6 : 1,
+          })}
+          onPress={handlePreviousYear}
+        >
+          <MaterialIcons
+            name="chevron-left"
+            size={24}
+            color={colors.foreground}
+          />
+        </Pressable>
+
+        <Text className="text-2xl font-bold text-foreground">
+          {selectedYear}年
+        </Text>
+
+        <Pressable
+          style={({ pressed }) => ({
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: colors.surface,
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: pressed ? 0.6 : 1,
+          })}
+          onPress={handleNextYear}
+        >
+          <MaterialIcons
+            name="chevron-right"
+            size={24}
+            color={colors.foreground}
+          />
+        </Pressable>
+      </View>
+
       <ScrollView className="flex-1">
         <View className="p-4 gap-4">
-          {/* Header with Year Selector */}
-          <View className="flex-row items-center justify-between">
-            <Pressable
-              style={({ pressed }) => ({
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                backgroundColor: colors.surface,
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: pressed ? 0.6 : 1,
-              })}
-              onPress={handlePreviousYear}
-            >
-              <MaterialIcons
-                name="chevron-left"
-                size={24}
-                color={colors.foreground}
-              />
-            </Pressable>
-
-            <Text className="text-2xl font-bold text-foreground">
-              {selectedYear}年
-            </Text>
-
-            <Pressable
-              style={({ pressed }) => ({
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                backgroundColor: colors.surface,
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: pressed ? 0.6 : 1,
-              })}
-              onPress={handleNextYear}
-            >
-              <MaterialIcons
-                name="chevron-right"
-                size={24}
-                color={colors.foreground}
-              />
-            </Pressable>
-          </View>
-
           {/* Summary Card */}
           <View className="bg-surface rounded-2xl p-4 border border-border">
             <Text className="text-sm text-muted mb-3">年間収支</Text>
@@ -484,9 +493,7 @@ export default function YearlyScreen() {
 
           {/* Monthly Breakdown */}
           <View className="bg-surface rounded-2xl p-4 border border-border">
-            <Text className="text-lg font-bold text-foreground mb-3">
-              月別詳細
-            </Text>
+            <Text className="text-lg font-bold text-foreground">月別詳細</Text>
 
             <View className="gap-2">
               {monthlyData.map((data) => (
@@ -499,27 +506,226 @@ export default function YearlyScreen() {
                   </Text>
 
                   <View className="items-end">
-                    <Text className="text-sm" style={{ color: colors.success }}>
-                      収入: {formatAmount(data.income)}
-                    </Text>
-                    <Text className="text-sm" style={{ color: colors.error }}>
-                      支出: {formatAmount(data.expense)}
-                    </Text>
-                    <Text
-                      className="text-sm font-semibold mt-1"
+                    {/* 収入行 */}
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
+                    >
+                      <Text
+                        style={{
+                          width: 40,
+                          textAlign: "right",
+                          color: colors.muted,
+                          fontSize: 14,
+                        }}
+                      >
+                        収入
+                      </Text>
+                      <Text
+                        style={{
+                          width: 100,
+                          textAlign: "right",
+                          color: colors.success,
+                          fontSize: 14,
+                          fontVariant: ["tabular-nums"],
+                        }}
+                      >
+                        {formatAmount(data.income)}
+                      </Text>
+                    </View>
+                    {/* 支出行 */}
+                    <View
                       style={{
-                        color:
-                          data.balance >= 0 ? colors.success : colors.error,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        marginTop: 4,
                       }}
                     >
-                      収支:
-                      {data.balance >= 0
-                        ? `+${formatAmount(data.balance)}`
-                        : formatAmount(data.balance)}
-                    </Text>
+                      <Text
+                        style={{
+                          width: 40,
+                          textAlign: "right",
+                          color: colors.muted,
+                          fontSize: 14,
+                        }}
+                      >
+                        支出
+                      </Text>
+                      <Text
+                        style={{
+                          width: 100,
+                          textAlign: "right",
+                          color: colors.error,
+                          fontSize: 14,
+                          fontVariant: ["tabular-nums"],
+                        }}
+                      >
+                        {formatAmount(data.expense)}
+                      </Text>
+                    </View>
+                    {/* 区切り線 */}
+                    <View
+                      style={{
+                        width: 140,
+                        height: 1,
+                        backgroundColor: colors.border,
+                        marginVertical: 4,
+                      }}
+                    />
+                    {/* 収支行 */}
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
+                    >
+                      <Text
+                        style={{
+                          width: 40,
+                          textAlign: "right",
+                          color: colors.foreground,
+                          fontSize: 14,
+                          fontWeight: "600",
+                        }}
+                      >
+                        収支
+                      </Text>
+                      <Text
+                        style={{
+                          width: 100,
+                          textAlign: "right",
+                          color:
+                            data.balance >= 0 ? colors.success : colors.error,
+                          fontSize: 14,
+                          fontWeight: "600",
+                          fontVariant: ["tabular-nums"],
+                        }}
+                      >
+                        {data.balance >= 0
+                          ? `+${formatAmount(data.balance)}`
+                          : formatAmount(data.balance)}
+                      </Text>
+                    </View>
                   </View>
                 </View>
               ))}
+
+              {/* 年間合計 */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  paddingVertical: 12,
+                  paddingHorizontal: 8,
+                  marginTop: 1,
+                  marginBottom: -6,
+                  marginHorizontal: -8,
+                  backgroundColor: colors.primary + "12",
+                  borderRadius: 8,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "700",
+                    color: colors.foreground,
+                  }}
+                >
+                  年間合計
+                </Text>
+
+                <View style={{ alignItems: "flex-end" }}>
+                  {/* 収入行 */}
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Text
+                      style={{
+                        width: 40,
+                        textAlign: "right",
+                        color: colors.muted,
+                        fontSize: 14,
+                      }}
+                    >
+                      収入
+                    </Text>
+                    <Text
+                      style={{
+                        width: 100,
+                        textAlign: "right",
+                        color: colors.success,
+                        fontSize: 14,
+                        fontVariant: ["tabular-nums"],
+                      }}
+                    >
+                      {formatAmount(summary.income)}
+                    </Text>
+                  </View>
+                  {/* 支出行 */}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      marginTop: 4,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        width: 40,
+                        textAlign: "right",
+                        color: colors.muted,
+                        fontSize: 14,
+                      }}
+                    >
+                      支出
+                    </Text>
+                    <Text
+                      style={{
+                        width: 100,
+                        textAlign: "right",
+                        color: colors.error,
+                        fontSize: 14,
+                        fontVariant: ["tabular-nums"],
+                      }}
+                    >
+                      {formatAmount(summary.expense)}
+                    </Text>
+                  </View>
+                  {/* 区切り線 */}
+                  <View
+                    style={{
+                      width: 140,
+                      height: 1,
+                      backgroundColor: colors.border,
+                      marginVertical: 4,
+                    }}
+                  />
+                  {/* 収支行 */}
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Text
+                      style={{
+                        width: 40,
+                        textAlign: "right",
+                        color: colors.foreground,
+                        fontSize: 14,
+                        fontWeight: "600",
+                      }}
+                    >
+                      収支
+                    </Text>
+                    <Text
+                      style={{
+                        width: 100,
+                        textAlign: "right",
+                        color:
+                          summary.balance >= 0 ? colors.success : colors.error,
+                        fontSize: 14,
+                        fontWeight: "600",
+                        fontVariant: ["tabular-nums"],
+                      }}
+                    >
+                      {summary.balance >= 0
+                        ? `+${formatAmount(summary.balance)}`
+                        : formatAmount(summary.balance)}
+                    </Text>
+                  </View>
+                </View>
+              </View>
             </View>
           </View>
         </View>

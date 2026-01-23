@@ -276,7 +276,7 @@ export default function HomeScreen() {
                           </View>
 
                           <View className="flex-1">
-                            <View className="flex-row items-end flex-wrap gap-3">
+                            <View className="flex-row items-end gap-2">
                               <Text
                                 className="text-base font-semibold text-foreground"
                                 numberOfLines={1}
@@ -285,8 +285,9 @@ export default function HomeScreen() {
                               </Text>
                               {transaction.memo && (
                                 <Text
-                                  className="text-sm font-normal text-muted"
+                                  className="text-sm font-normal text-muted flex-1"
                                   numberOfLines={1}
+                                  ellipsizeMode="tail"
                                 >
                                   <MaterialIcons name="description" />
                                   {transaction.memo}
@@ -308,7 +309,6 @@ export default function HomeScreen() {
                                 : colors.error,
                           }}
                         >
-                          {transaction.type === "income" ? "+" : "-"}
                           {formatAmount(transaction.amount)}
                         </Text>
                       </View>
