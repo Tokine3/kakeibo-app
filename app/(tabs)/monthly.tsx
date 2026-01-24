@@ -244,7 +244,7 @@ export default function MonthlyScreen() {
                 <Text className="text-base text-foreground">収入</Text>
                 <Text
                   className="text-lg font-semibold"
-                  style={{ color: colors.success }}
+                  style={{ color: colors.success, fontVariant: ["tabular-nums"] }}
                 >
                   {formatAmount(summary.income)}
                 </Text>
@@ -254,7 +254,7 @@ export default function MonthlyScreen() {
                 <Text className="text-base text-foreground">支出</Text>
                 <Text
                   className="text-lg font-semibold"
-                  style={{ color: colors.error }}
+                  style={{ color: colors.error, fontVariant: ["tabular-nums"] }}
                 >
                   {formatAmount(summary.expense)}
                 </Text>
@@ -276,6 +276,7 @@ export default function MonthlyScreen() {
                   className="text-xl font-bold"
                   style={{
                     color: summary.balance >= 0 ? colors.success : colors.error,
+                    fontVariant: ["tabular-nums"],
                   }}
                 >
                   {summary.balance >= 0
@@ -561,6 +562,7 @@ export default function MonthlyScreen() {
                               transaction.type === "income"
                                 ? colors.success
                                 : colors.error,
+                            fontVariant: ["tabular-nums"],
                           }}
                         >
                           {formatAmount(transaction.amount)}
