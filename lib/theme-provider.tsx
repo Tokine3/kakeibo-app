@@ -3,21 +3,35 @@ import { Appearance, View, useColorScheme as useSystemColorScheme } from "react-
 import { colorScheme as nativewindColorScheme, vars } from "nativewind";
 
 import { SchemeColors, type ColorScheme } from "@/constants/theme";
+import { getThemeMode, saveThemeMode, type ThemeMode } from "@/lib/storage";
 
 type ThemeContextValue = {
   colorScheme: ColorScheme;
-  setColorScheme: (scheme: ColorScheme) => void;
+  themeMode: ThemeMode;
+  setThemeMode: (mode: ThemeMode) => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemScheme = useSystemColorScheme() ?? "light";
-  const [colorScheme, setColorSchemeState] = useState<ColorScheme>(systemScheme);
+  const [themeMode, setThemeModeState] = useState<ThemeMode>("system");
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  const applyScheme = useCallback((scheme: ColorScheme) => {
-    nativewindColorScheme.set(scheme);
-    Appearance.setColorScheme?.(scheme);
+  // 実際に表示するカラースキームを計算
+  const colorScheme: ColorScheme = themeMode === "system" ? systemScheme : themeMode;
+
+  const applyScheme = useCallback((scheme: ColorScheme, isSystemMode: boolean) => {
+    // nativewindとAppearanceはlight/darkのみサポート
+    const baseScheme = scheme === "dark" ? "dark" : "light";
+    nativewindColorScheme.set(baseScheme);
+    // systemモードの場合はAppearance.setColorSchemeを呼ばない（システム設定を尊重）
+    if (!isSystemMode) {
+      Appearance.setColorScheme?.(baseScheme);
+    } else {
+      // systemモードの場合はnullに戻してシステム設定に従う
+      Appearance.setColorScheme?.(null);
+    }
     if (typeof document !== "undefined") {
       const root = document.documentElement;
       root.dataset.theme = scheme;
@@ -29,14 +43,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const setColorScheme = useCallback((scheme: ColorScheme) => {
-    setColorSchemeState(scheme);
-    applyScheme(scheme);
-  }, [applyScheme]);
+  const setThemeMode = useCallback(async (mode: ThemeMode) => {
+    setThemeModeState(mode);
+    await saveThemeMode(mode);
+  }, []);
 
+  // 初回読み込み時にストレージから設定を取得
   useEffect(() => {
-    applyScheme(colorScheme);
-  }, [applyScheme, colorScheme]);
+    getThemeMode().then((mode) => {
+      setThemeModeState(mode);
+      setIsLoaded(true);
+    });
+  }, []);
+
+  // colorSchemeが変更されたら適用
+  useEffect(() => {
+    applyScheme(colorScheme, themeMode === "system");
+  }, [applyScheme, colorScheme, themeMode]);
 
   const themeVariables = useMemo(
     () =>
@@ -57,11 +80,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       colorScheme,
-      setColorScheme,
+      themeMode,
+      setThemeMode,
     }),
-    [colorScheme, setColorScheme],
+    [colorScheme, themeMode, setThemeMode],
   );
-  console.log(value, themeVariables)
 
   return (
     <ThemeContext.Provider value={value}>

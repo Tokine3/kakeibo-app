@@ -27,7 +27,7 @@ function ColorSwatch({ name, value }: { name: PaletteName; value: string }) {
 export default function ThemeLabScreen() {
   const [pressCount, setPressCount] = useState(0);
   const [lastAction, setLastAction] = useState<string>("None yet");
-  const { colorScheme, setColorScheme } = useThemeContext();
+  const { colorScheme, setThemeMode } = useThemeContext();
   const colors = useColors();
 
   const swatches = useMemo(
@@ -51,6 +51,8 @@ export default function ThemeLabScreen() {
     return {
       light: build("light"),
       dark: build("dark"),
+      pink: build("pink"),
+      blue: build("blue"),
     };
   }, []);
 
@@ -58,8 +60,8 @@ export default function ThemeLabScreen() {
     <ScreenContainer className="p-5">
       <ScrollView className="flex-1">
         <View className="gap-4 pb-8">
-          <View className="flex-row gap-2">
-            {(["light", "dark"] as ColorScheme[]).map((scheme) => (
+          <View className="flex-row flex-wrap gap-2">
+            {(["light", "dark", "pink", "blue"] as ColorScheme[]).map((scheme) => (
               <Pressable
                 key={scheme}
                 style={[
@@ -76,7 +78,7 @@ export default function ThemeLabScreen() {
                   },
                 ]}
                 onPress={() => {
-                  setColorScheme(scheme);
+                  setThemeMode(scheme);
                   setLastAction(`Applied ${scheme} globally`);
                 }}
               >

@@ -52,8 +52,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="categories"
         options={{
-          title: "カテゴリ",
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="folder.fill" color={color} />,
+          title: "設定",
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gear" color={color} />,
         }}
       />
     </Tabs>

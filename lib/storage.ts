@@ -5,7 +5,10 @@ const STORAGE_KEYS = {
   TRANSACTIONS: "@kakeibo/transactions",
   CATEGORIES: "@kakeibo/categories",
   INITIALIZED: "@kakeibo/initialized",
+  THEME_MODE: "@kakeibo/theme-mode",
 } as const;
+
+export type ThemeMode = "system" | "light" | "dark" | "pink" | "blue";
 
 /**
  * デフォルトカテゴリ
@@ -230,6 +233,31 @@ export async function clearAllData(): Promise<void> {
     ]);
   } catch (error) {
     console.error("Failed to clear data:", error);
+    throw error;
+  }
+}
+
+/**
+ * テーマモードを取得
+ */
+export async function getThemeMode(): Promise<ThemeMode> {
+  try {
+    const mode = await AsyncStorage.getItem(STORAGE_KEYS.THEME_MODE);
+    return (mode as ThemeMode) || "system";
+  } catch (error) {
+    console.error("Failed to get theme mode:", error);
+    return "system";
+  }
+}
+
+/**
+ * テーマモードを保存
+ */
+export async function saveThemeMode(mode: ThemeMode): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.THEME_MODE, mode);
+  } catch (error) {
+    console.error("Failed to save theme mode:", error);
     throw error;
   }
 }
