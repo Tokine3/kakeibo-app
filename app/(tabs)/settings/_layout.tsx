@@ -13,14 +13,22 @@ export default function SettingsLayout() {
         headerTintColor: colors.primary,
         headerTitleStyle: {
           color: colors.foreground,
+          fontWeight: "600",
         },
+        headerTitleAlign: "center",
+        headerBackVisible: true,
+        headerBackTitle: "",
         contentStyle: {
           backgroundColor: colors.background,
         },
-        headerBackVisible: true,
-        headerBackTitle: "設定",
       }}
     >
+      <Stack.Screen
+        name="index"
+        options={{
+          headerShown: false,
+        }}
+      />
       <Stack.Screen
         name="category-edit"
         options={{

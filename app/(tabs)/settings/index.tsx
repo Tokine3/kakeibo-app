@@ -56,7 +56,7 @@ export default function SettingsScreen() {
               justifyContent: "space-between",
               opacity: pressed ? 0.7 : 1,
             })}
-            onPress={() => handleNavigate("/settings/category-edit")}
+            onPress={() => handleNavigate("/(tabs)/settings/category-edit")}
           >
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <View
@@ -101,7 +101,7 @@ export default function SettingsScreen() {
               justifyContent: "space-between",
               opacity: pressed ? 0.7 : 1,
             })}
-            onPress={() => handleNavigate("/settings/theme")}
+            onPress={() => handleNavigate("/(tabs)/settings/theme")}
           >
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <View
