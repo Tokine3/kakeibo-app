@@ -200,9 +200,7 @@ export function TransactionModal({
             })}
             onPress={onClose}
           >
-            <Text style={{ fontSize: 16, color: colors.primary }}>
-              キャンセル
-            </Text>
+            <MaterialIcons name="clear" size={24} color={colors.primary} />
           </Pressable>
           <Text
             style={{

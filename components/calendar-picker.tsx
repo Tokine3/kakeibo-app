@@ -3,6 +3,7 @@ import { View, Text, Pressable, Modal } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import dayjs from "dayjs";
 import "dayjs/locale/ja";
+import { isHoliday } from "@holiday-jp/holiday_jp";
 import { useColors } from "@/hooks/use-colors";
 
 dayjs.locale("ja");
@@ -197,6 +198,7 @@ export function CalendarPicker({ value, onChange }: CalendarPickerProps) {
                 const today = isToday(item.date);
                 const selected = isSelected(item.date);
                 const dayOfWeek = item.date.day();
+                const holiday = isHoliday(item.date.toDate());
 
                 return (
                   <Pressable
@@ -234,7 +236,7 @@ export function CalendarPicker({ value, onChange }: CalendarPickerProps) {
                             ? "#FFFFFF"
                             : !item.isCurrentMonth
                               ? colors.muted
-                              : dayOfWeek === 0
+                              : dayOfWeek === 0 || holiday
                                 ? colors.error
                                 : dayOfWeek === 6
                                   ? colors.primary
