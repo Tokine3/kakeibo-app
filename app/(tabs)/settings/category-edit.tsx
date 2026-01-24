@@ -1,15 +1,18 @@
-import { useState, useEffect, useCallback } from "react";
-import { View, Text, ScrollView, Alert, Platform, Pressable } from "react-native";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { View, Text, ScrollView, Platform, Pressable } from "react-native";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/use-colors";
 import { getCategories, deleteCategory } from "@/lib/storage";
 import type { Category } from "@/types";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { CategoryModal } from "@/components/category-modal";
 
 export default function CategoryEditScreen() {
   const colors = useColors();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | undefined>();
 
   const loadCategories = useCallback(async () => {
     try {
@@ -26,37 +29,109 @@ export default function CategoryEditScreen() {
     loadCategories();
   }, [loadCategories]);
 
-  const handleDelete = useCallback(
-    (category: Category) => {
-      if (category.isDefault) {
-        Alert.alert("削除できません", "デフォルトカテゴリは削除できません。");
-        return;
-      }
-
-      Alert.alert("カテゴリを削除", `「${category.name}」を削除しますか?`, [
-        { text: "キャンセル", style: "cancel" },
-        {
-          text: "削除",
-          style: "destructive",
-          onPress: async () => {
-            if (Platform.OS !== "web") {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            }
-            await deleteCategory(category.id);
-            loadCategories();
-          },
-        },
-      ]);
-    },
-    [loadCategories]
+  // タイプ別にグループ化
+  const expenseCategories = useMemo(
+    () => categories.filter((c) => c.type === "expense"),
+    [categories]
   );
+  const incomeCategories = useMemo(
+    () => categories.filter((c) => c.type === "income"),
+    [categories]
+  );
+
+  // 削除可能かどうかを判定（同一タイプで最後の1つは削除不可）
+  const canDelete = useCallback(
+    (category: Category): boolean => {
+      const sameTypeCount = categories.filter(
+        (c) => c.type === category.type
+      ).length;
+      return sameTypeCount > 1;
+    },
+    [categories]
+  );
+
+  const handleCategoryPress = (category: Category) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setEditingCategory(category);
+    setModalVisible(true);
+  };
 
   const handleAdd = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    Alert.alert("開発中", "カテゴリ追加機能は次のフェーズで実装します。");
+    setEditingCategory(undefined);
+    setModalVisible(true);
   };
+
+  const handleModalClose = () => {
+    setModalVisible(false);
+    setEditingCategory(undefined);
+  };
+
+  const handleModalSave = () => {
+    loadCategories();
+  };
+
+  const handleDelete = async () => {
+    if (!editingCategory) return;
+    try {
+      await deleteCategory(editingCategory.id);
+      loadCategories();
+    } catch (error) {
+      console.error("Failed to delete category:", error);
+    }
+  };
+
+  const renderCategoryCard = (category: Category) => (
+    <Pressable
+      key={category.id}
+      style={({ pressed }) => ({
+        backgroundColor: colors.surface,
+        borderRadius: 16,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: colors.border,
+        opacity: pressed ? 0.7 : 1,
+      })}
+      onPress={() => handleCategoryPress(category)}
+    >
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+        }}
+      >
+        <View
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: 24,
+            backgroundColor: category.color,
+            alignItems: "center",
+            justifyContent: "center",
+            marginRight: 12,
+          }}
+        >
+          <MaterialIcons name={category.icon as any} size={24} color="#FFFFFF" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: "600",
+              color: colors.foreground,
+            }}
+          >
+            {category.name}
+          </Text>
+        </View>
+        <MaterialIcons name="chevron-right" size={24} color={colors.muted} />
+      </View>
+    </Pressable>
+  );
 
   if (loading) {
     return (
@@ -80,98 +155,36 @@ export default function CategoryEditScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
+        {/* 支出カテゴリ */}
+        <Text
+          style={{
+            fontSize: 14,
+            fontWeight: "600",
+            color: colors.muted,
+            marginBottom: 8,
+            paddingHorizontal: 4,
+          }}
+        >
+          支出
+        </Text>
+        <View style={{ gap: 8, marginBottom: 24 }}>
+          {expenseCategories.map(renderCategoryCard)}
+        </View>
+
+        {/* 収入カテゴリ */}
+        <Text
+          style={{
+            fontSize: 14,
+            fontWeight: "600",
+            color: colors.muted,
+            marginBottom: 8,
+            paddingHorizontal: 4,
+          }}
+        >
+          収入
+        </Text>
         <View style={{ gap: 8 }}>
-          {categories.map((category) => (
-            <View
-              key={category.id}
-              style={{
-                backgroundColor: colors.surface,
-                borderRadius: 16,
-                padding: 16,
-                borderWidth: 1,
-                borderColor: colors.border,
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
-                  <View
-                    style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 24,
-                      backgroundColor: category.color,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginRight: 12,
-                    }}
-                  >
-                    <MaterialIcons name={category.icon as any} size={24} color="#FFFFFF" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={{
-                        fontSize: 18,
-                        fontWeight: "600",
-                        color: colors.foreground,
-                      }}
-                    >
-                      {category.name}
-                    </Text>
-                    {category.isDefault && (
-                      <Text style={{ fontSize: 12, color: colors.muted, marginTop: 4 }}>
-                        デフォルト
-                      </Text>
-                    )}
-                  </View>
-                </View>
-
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  <Pressable
-                    style={({ pressed }) => ({
-                      width: 36,
-                      height: 36,
-                      borderRadius: 18,
-                      backgroundColor: colors.surface,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      opacity: pressed ? 0.6 : 1,
-                    })}
-                    onPress={() => {
-                      if (Platform.OS !== "web") {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      }
-                      Alert.alert("開発中", "カテゴリ編集機能は次のフェーズで実装します。");
-                    }}
-                  >
-                    <MaterialIcons name="edit" size={18} color={colors.muted} />
-                  </Pressable>
-
-                  {!category.isDefault && (
-                    <Pressable
-                      style={({ pressed }) => ({
-                        width: 36,
-                        height: 36,
-                        borderRadius: 18,
-                        backgroundColor: colors.surface,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        opacity: pressed ? 0.6 : 1,
-                      })}
-                      onPress={() => handleDelete(category)}
-                    >
-                      <MaterialIcons name="delete" size={18} color={colors.error} />
-                    </Pressable>
-                  )}
-                </View>
-              </View>
-            </View>
-          ))}
+          {incomeCategories.map(renderCategoryCard)}
         </View>
       </ScrollView>
 
@@ -198,6 +211,17 @@ export default function CategoryEditScreen() {
       >
         <MaterialIcons name="add" size={28} color="#FFFFFF" />
       </Pressable>
+
+      {/* Category Modal */}
+      <CategoryModal
+        visible={modalVisible}
+        onClose={handleModalClose}
+        onSave={handleModalSave}
+        category={editingCategory}
+        initialType="expense"
+        canDelete={editingCategory ? canDelete(editingCategory) : false}
+        onDelete={handleDelete}
+      />
     </View>
   );
 }
