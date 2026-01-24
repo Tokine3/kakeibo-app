@@ -493,35 +493,27 @@ export function TransactionModal({
                 }}
               />
             </View>
+
+            {/* Save Button */}
+            <Pressable
+              style={({ pressed }) => ({
+                marginBottom: 12,
+                paddingVertical: 16,
+                borderRadius: 12,
+                alignItems: "center",
+                backgroundColor: colors.primary,
+                opacity: pressed ? 0.7 : 1,
+              })}
+              onPress={handleSave}
+            >
+              <Text
+                style={{ fontSize: 16, fontWeight: "600", color: "#FFFFFF" }}
+              >
+                保存
+              </Text>
+            </Pressable>
           </View>
         </ScrollView>
-
-        {/* Footer with Save Button */}
-        <View
-          style={{
-            paddingHorizontal: 16,
-            paddingTop: 12,
-            paddingBottom: 32,
-            borderTopWidth: 1,
-            borderTopColor: colors.border,
-            backgroundColor: colors.background,
-          }}
-        >
-          <Pressable
-            style={({ pressed }) => ({
-              paddingVertical: 16,
-              borderRadius: 12,
-              alignItems: "center",
-              backgroundColor: colors.primary,
-              opacity: pressed ? 0.7 : 1,
-            })}
-            onPress={handleSave}
-          >
-            <Text style={{ fontSize: 16, fontWeight: "600", color: "#FFFFFF" }}>
-              保存
-            </Text>
-          </Pressable>
-        </View>
       </KeyboardAvoidingView>
     </Modal>
   );
