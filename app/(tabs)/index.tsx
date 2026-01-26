@@ -136,6 +136,20 @@ export default function HomeScreen() {
 
   return (
     <ScreenContainer>
+      {/* Dropdown overlay - closes dropdown when tapping outside */}
+      {sortDropdownOpen && (
+        <Pressable
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 50,
+          }}
+          onPress={() => setSortDropdownOpen(false)}
+        />
+      )}
       <ScrollView className="flex-1">
         <View className="p-4 gap-4">
           {/* Header */}
