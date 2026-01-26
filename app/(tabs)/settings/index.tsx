@@ -85,7 +85,7 @@ export default function SettingsScreen() {
         </View>
 
         {/* デザイン */}
-        <View>
+        <View style={{ marginBottom: 24 }}>
           <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 8 }}>
             デザイン
           </Text>
@@ -125,6 +125,58 @@ export default function SettingsScreen() {
                   style={{ fontSize: 13, color: colors.muted, marginTop: 2 }}
                 >
                   {THEME_LABELS[themeMode] || themeMode}
+                </Text>
+              </View>
+            </View>
+            <MaterialIcons
+              name="chevron-right"
+              size={24}
+              color={colors.muted}
+            />
+          </Pressable>
+        </View>
+
+        {/* データ管理 */}
+        <View>
+          <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 8 }}>
+            データ
+          </Text>
+          <Pressable
+            style={({ pressed }) => ({
+              backgroundColor: colors.surface,
+              borderRadius: 12,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: colors.border,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              opacity: pressed ? 0.7 : 1,
+            })}
+            onPress={() => handleNavigate("/(tabs)/settings/data-management")}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: colors.primary,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginRight: 12,
+                }}
+              >
+                <MaterialIcons name="storage" size={20} color="#FFFFFF" />
+              </View>
+              <View>
+                <Text style={{ fontSize: 16, color: colors.foreground }}>
+                  データ管理
+                </Text>
+                <Text
+                  style={{ fontSize: 13, color: colors.muted, marginTop: 2 }}
+                >
+                  バックアップ・復元
                 </Text>
               </View>
             </View>

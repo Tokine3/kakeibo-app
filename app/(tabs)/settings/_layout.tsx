@@ -41,6 +41,12 @@ export default function SettingsLayout() {
           title: "テーマ選択",
         }}
       />
+      <Stack.Screen
+        name="data-management"
+        options={{
+          title: "データ管理",
+        }}
+      />
     </Stack>
   );
 }
