@@ -15,6 +15,15 @@ import {
 } from "@/lib/calculations";
 import type { Transaction, Category } from "@/types";
 
+type SortOption = "date-desc" | "date-asc" | "amount-desc" | "amount-asc";
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: "date-desc", label: "日付（新しい順）" },
+  { value: "date-asc", label: "日付（古い順）" },
+  { value: "amount-desc", label: "金額（高い順）" },
+  { value: "amount-asc", label: "金額（低い順）" },
+];
+
 export default function HomeScreen() {
   const colors = useColors();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -25,6 +34,9 @@ export default function HomeScreen() {
   const [selectedTransaction, setSelectedTransaction] = useState<
     Transaction | undefined
   >();
+  const [sortOption, setSortOption] = useState<SortOption>("date-desc");
+  const [showExpenseOnly, setShowExpenseOnly] = useState(false);
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -59,15 +71,34 @@ export default function HomeScreen() {
 
   const recentTransactions = useMemo(() => {
     const threeMonthsAgo = dayjs().subtract(3, "month").startOf("day");
-    return transactions
-      .filter(
-        (t) =>
-          dayjs(t.date).isAfter(threeMonthsAgo) ||
-          dayjs(t.date).isSame(threeMonthsAgo, "day"),
-      )
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 100);
-  }, [transactions]);
+
+    let filtered = transactions.filter(
+      (t) =>
+        dayjs(t.date).isAfter(threeMonthsAgo) ||
+        dayjs(t.date).isSame(threeMonthsAgo, "day"),
+    );
+
+    // 支出のみフィルター
+    if (showExpenseOnly) {
+      filtered = filtered.filter((t) => t.type === "expense");
+    }
+
+    // 並び替え
+    filtered.sort((a, b) => {
+      switch (sortOption) {
+        case "date-desc":
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        case "date-asc":
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        case "amount-desc":
+          return b.amount - a.amount;
+        case "amount-asc":
+          return a.amount - b.amount;
+      }
+    });
+
+    return filtered.slice(0, 100);
+  }, [transactions, sortOption, showExpenseOnly]);
 
   const handleAddTransaction = (type: "income" | "expense") => {
     if (Platform.OS !== "web") {
@@ -124,7 +155,10 @@ export default function HomeScreen() {
                 <Text className="text-base text-foreground">収入</Text>
                 <Text
                   className="text-lg font-semibold"
-                  style={{ color: colors.success, fontVariant: ["tabular-nums"] }}
+                  style={{
+                    color: colors.success,
+                    fontVariant: ["tabular-nums"],
+                  }}
                 >
                   {formatAmount(summary.income)}
                 </Text>
@@ -216,9 +250,119 @@ export default function HomeScreen() {
 
           {/* Recent Transactions */}
           <View>
-            <Text className="text-lg font-bold text-foreground mb-3">
-              最近の取引
-            </Text>
+            {/* Header with Sort & Filter */}
+            <View
+              style={{ zIndex: 100 }}
+              className="flex-row items-center justify-between mb-3"
+            >
+              <Text className="text-lg font-bold text-foreground">
+                直近3ヶ月の取引
+              </Text>
+
+              <View className="flex-row items-center gap-2">
+                {/* Sort Button */}
+                <View style={{ position: "relative", zIndex: 100 }}>
+                  <Pressable
+                    style={({ pressed }) => ({
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                      backgroundColor: sortDropdownOpen
+                        ? `${colors.primary}20`
+                        : colors.surface,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      opacity: pressed ? 0.7 : 1,
+                    })}
+                    onPress={() => setSortDropdownOpen(!sortDropdownOpen)}
+                  >
+                    <MaterialIcons
+                      name="swap-vert"
+                      size={20}
+                      color={sortDropdownOpen ? colors.primary : colors.muted}
+                    />
+                  </Pressable>
+
+                  {sortDropdownOpen && (
+                    <View
+                      style={{
+                        position: "absolute",
+                        top: "100%",
+                        right: 0,
+                        marginTop: 4,
+                        backgroundColor: colors.surface,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        minWidth: 160,
+                        shadowColor: "#000",
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 4,
+                        elevation: 10,
+                        zIndex: 100,
+                      }}
+                    >
+                      {SORT_OPTIONS.map((option) => (
+                        <Pressable
+                          key={option.value}
+                          style={({ pressed }) => ({
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
+                            backgroundColor:
+                              sortOption === option.value
+                                ? `${colors.primary}20`
+                                : pressed
+                                  ? colors.muted + "20"
+                                  : "transparent",
+                          })}
+                          onPress={() => {
+                            setSortOption(option.value);
+                            setSortDropdownOpen(false);
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color:
+                                sortOption === option.value
+                                  ? colors.primary
+                                  : colors.foreground,
+                              fontSize: 13,
+                            }}
+                          >
+                            {option.label}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                {/* Expense Only Chip */}
+                <Pressable
+                  style={({ pressed }) => ({
+                    paddingHorizontal: 10,
+                    paddingVertical: 8,
+                    borderRadius: 16,
+                    backgroundColor: showExpenseOnly
+                      ? `${colors.primary}20`
+                      : colors.surface,
+                    opacity: pressed ? 0.7 : 1,
+                  })}
+                  onPress={() => setShowExpenseOnly(!showExpenseOnly)}
+                >
+                  <Text
+                    style={{
+                      color: showExpenseOnly ? colors.primary : colors.muted,
+                      fontSize: 12,
+                      fontWeight: showExpenseOnly ? "600" : "400",
+                    }}
+                  >
+                    支出のみ表示
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
 
             {recentTransactions.length === 0 ? (
               <View className="bg-surface rounded-2xl p-6 border border-border items-center">
