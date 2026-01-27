@@ -136,21 +136,21 @@ export default function HomeScreen() {
 
   return (
     <ScreenContainer>
-      {/* Dropdown overlay - closes dropdown when tapping outside */}
-      {sortDropdownOpen && (
-        <Pressable
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 50,
-          }}
-          onPress={() => setSortDropdownOpen(false)}
-        />
-      )}
       <ScrollView className="flex-1">
+        {/* Dropdown overlay - closes dropdown when tapping outside */}
+        {sortDropdownOpen && (
+          <Pressable
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 50,
+            }}
+            onPress={() => setSortDropdownOpen(false)}
+          />
+        )}
         <View className="p-4 gap-4">
           {/* Header */}
           <View className="mb-2">
@@ -313,8 +313,8 @@ export default function HomeScreen() {
                         shadowOffset: { width: 0, height: 2 },
                         shadowOpacity: 0.1,
                         shadowRadius: 4,
-                        elevation: 10,
-                        zIndex: 100,
+                        elevation: 999,
+                        zIndex: 999,
                       }}
                     >
                       {SORT_OPTIONS.map((option) => (
