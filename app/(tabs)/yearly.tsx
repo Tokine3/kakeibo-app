@@ -8,6 +8,7 @@ import {
   Dimensions,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { LineChart, PieChart } from "react-native-chart-kit";
@@ -85,6 +86,16 @@ export default function YearlyScreen() {
     if (viewMode === "income") return categoryIncome;
     return [];
   }, [viewMode, categoryExpenseData, categoryIncome]);
+
+  const handleMonthTap = (month: number) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    router.push({
+      pathname: "/(tabs)/monthly",
+      params: { year: selectedYear.toString(), month: month.toString() },
+    });
+  };
 
   const handlePreviousYear = () => {
     if (Platform.OS !== "web") {
@@ -382,10 +393,10 @@ export default function YearlyScreen() {
                 )}
 
                 {viewMode === "all" ? (
-                  <View className="gap-2">
+                  <View className="gap-1">
                     {categoryExpenseData.length > 0 && (
                       <Text
-                        className="text-sm font-semibold text-foreground mt-2"
+                        className="text-sm font-semibold text-foreground mt-2 mb-1"
                         style={{ color: colors.error }}
                       >
                         支出
@@ -394,7 +405,14 @@ export default function YearlyScreen() {
                     {categoryExpenseData.map((ce) => (
                       <View
                         key={`expense-${ce.categoryId}`}
-                        className="flex-row items-center justify-between"
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          paddingVertical: 8,
+                          paddingHorizontal: 8,
+                          borderRadius: 8,
+                        }}
                       >
                         <View className="flex-row items-center flex-1">
                           <View
@@ -406,11 +424,22 @@ export default function YearlyScreen() {
                               marginRight: 8,
                             }}
                           />
-                          <Text className="text-sm text-foreground">
+                          <Text
+                            style={{
+                              fontSize: 14,
+                              color: colors.foreground,
+                            }}
+                          >
                             {ce.categoryName}
                           </Text>
                         </View>
-                        <Text className="text-sm font-semibold text-foreground">
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: "600",
+                            color: colors.foreground,
+                          }}
+                        >
                           {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}
                           %)
                         </Text>
@@ -418,7 +447,7 @@ export default function YearlyScreen() {
                     ))}
                     {categoryIncome.length > 0 && (
                       <Text
-                        className="text-sm font-semibold text-foreground mt-2"
+                        className="text-sm font-semibold text-foreground mt-2 mb-1"
                         style={{ color: colors.success }}
                       >
                         収入
@@ -427,7 +456,14 @@ export default function YearlyScreen() {
                     {categoryIncome.map((ce) => (
                       <View
                         key={`income-${ce.categoryId}`}
-                        className="flex-row items-center justify-between"
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          paddingVertical: 8,
+                          paddingHorizontal: 8,
+                          borderRadius: 8,
+                        }}
                       >
                         <View className="flex-row items-center flex-1">
                           <View
@@ -439,11 +475,22 @@ export default function YearlyScreen() {
                               marginRight: 8,
                             }}
                           />
-                          <Text className="text-sm text-foreground">
+                          <Text
+                            style={{
+                              fontSize: 14,
+                              color: colors.foreground,
+                            }}
+                          >
                             {ce.categoryName}
                           </Text>
                         </View>
-                        <Text className="text-sm font-semibold text-foreground">
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: "600",
+                            color: colors.foreground,
+                          }}
+                        >
                           {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}
                           %)
                         </Text>
@@ -451,11 +498,18 @@ export default function YearlyScreen() {
                     ))}
                   </View>
                 ) : (
-                  <View className="gap-2">
+                  <View className="gap-1">
                     {currentCategoryData.map((ce) => (
                       <View
                         key={ce.categoryId}
-                        className="flex-row items-center justify-between"
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          paddingVertical: 8,
+                          paddingHorizontal: 8,
+                          borderRadius: 8,
+                        }}
                       >
                         <View className="flex-row items-center flex-1">
                           <View
@@ -467,11 +521,22 @@ export default function YearlyScreen() {
                               marginRight: 8,
                             }}
                           />
-                          <Text className="text-sm text-foreground">
+                          <Text
+                            style={{
+                              fontSize: 14,
+                              color: colors.foreground,
+                            }}
+                          >
                             {ce.categoryName}
                           </Text>
                         </View>
-                        <Text className="text-sm font-semibold text-foreground">
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: "600",
+                            color: colors.foreground,
+                          }}
+                        >
                           {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}
                           %)
                         </Text>
@@ -498,13 +563,29 @@ export default function YearlyScreen() {
 
             <View className="gap-2">
               {monthlyData.map((data) => (
-                <View
+                <Pressable
                   key={data.month}
-                  className="flex-row items-center justify-between py-2 border-b border-border"
+                  style={({ pressed }) => ({
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    paddingVertical: 8,
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border,
+                    opacity: pressed ? 0.7 : 1,
+                  })}
+                  onPress={() => handleMonthTap(data.month)}
                 >
-                  <Text className="text-base text-foreground font-medium">
-                    {data.month}月
-                  </Text>
+                  <View className="flex-row items-center gap-2">
+                    <Text className="text-base text-foreground font-medium">
+                      {data.month}月
+                    </Text>
+                    <MaterialIcons
+                      name="chevron-right"
+                      size={16}
+                      color={colors.muted}
+                    />
+                  </View>
 
                   <View className="items-end">
                     {/* 収入行 */}
@@ -604,7 +685,7 @@ export default function YearlyScreen() {
                       </Text>
                     </View>
                   </View>
-                </View>
+                </Pressable>
               ))}
 
               {/* 年間合計 */}

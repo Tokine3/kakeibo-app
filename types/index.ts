@@ -78,5 +78,6 @@ export interface FilterState {
   selectedCategoryIds: string[];
   amountMin: number | null;
   amountMax: number | null;
-  sortOrder: "date-desc" | "date-asc";
+  dateSortOrder: "date-desc" | "date-asc";
+  amountSortOrder: "amount-asc" | "amount-desc" | null;
 }

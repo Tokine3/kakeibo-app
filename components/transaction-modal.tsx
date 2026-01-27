@@ -193,15 +193,20 @@ export function TransactionModal({
             borderBottomColor: colors.border,
           }}
         >
-          <Pressable
-            style={({ pressed }) => ({
-              opacity: pressed ? 0.6 : 1,
-              minWidth: 80,
-            })}
-            onPress={onClose}
-          >
-            <MaterialIcons name="clear" size={24} color={colors.primary} />
-          </Pressable>
+          {isEdit ? (
+            <Pressable
+              style={({ pressed }) => ({
+                opacity: pressed ? 0.6 : 1,
+                minWidth: 80,
+              })}
+              onPress={handleDelete}
+            >
+              <MaterialIcons name="delete" size={24} color={colors.error} />
+            </Pressable>
+          ) : (
+            <View style={{ minWidth: 80 }} />
+          )}
+
           <Text
             style={{
               fontSize: 18,
@@ -211,20 +216,17 @@ export function TransactionModal({
           >
             {isEdit ? "取引を編集" : "取引を追加"}
           </Text>
-          {isEdit ? (
-            <Pressable
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.6 : 1,
-                minWidth: 80,
-                alignItems: "flex-end",
-              })}
-              onPress={handleDelete}
-            >
-              <MaterialIcons name="delete" size={24} color={colors.error} />
-            </Pressable>
-          ) : (
-            <View style={{ minWidth: 80 }} />
-          )}
+
+          <Pressable
+            style={({ pressed }) => ({
+              opacity: pressed ? 0.6 : 1,
+              minWidth: 80,
+              alignItems: "flex-end",
+            })}
+            onPress={onClose}
+          >
+            <MaterialIcons name="clear" size={24} color={colors.primary} />
+          </Pressable>
         </View>
         <ScrollView
           ref={scrollViewRef}

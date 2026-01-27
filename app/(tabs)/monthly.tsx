@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Dimensions,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { PieChart } from "react-native-chart-kit";
@@ -30,6 +31,7 @@ import type { Transaction, Category, FilterState } from "@/types";
 
 export default function MonthlyScreen() {
   const colors = useColors();
+  const params = useLocalSearchParams<{ year?: string; month?: string }>();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,8 +41,20 @@ export default function MonthlyScreen() {
   >();
 
   const now = new Date();
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(() => {
+    return params.year ? parseInt(params.year) : now.getFullYear();
+  });
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    return params.month ? parseInt(params.month) : now.getMonth() + 1;
+  });
+
+  // パラメータ変更時に更新
+  useEffect(() => {
+    if (params.year && params.month) {
+      setSelectedYear(parseInt(params.year));
+      setSelectedMonth(parseInt(params.month));
+    }
+  }, [params.year, params.month]);
   const [viewMode, setViewMode] = useState<ViewMode>("all");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null,
@@ -51,8 +65,21 @@ export default function MonthlyScreen() {
     selectedCategoryIds: [],
     amountMin: null,
     amountMax: null,
-    sortOrder: "date-desc",
+    dateSortOrder: "date-desc",
+    amountSortOrder: null,
   });
+
+  // 今月かどうかを判定
+  const isCurrentMonth =
+    selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1;
+
+  const handleGoToCurrentMonth = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setSelectedYear(now.getFullYear());
+    setSelectedMonth(now.getMonth() + 1);
+  };
 
   const loadData = useCallback(async () => {
     try {
@@ -113,7 +140,8 @@ export default function MonthlyScreen() {
       filterState.selectedCategoryIds.length > 0 ||
       filterState.amountMin !== null ||
       filterState.amountMax !== null ||
-      filterState.sortOrder !== "date-desc"
+      filterState.dateSortOrder !== "date-desc" ||
+      filterState.amountSortOrder !== null
     );
   }, [filterState]);
 
@@ -149,7 +177,14 @@ export default function MonthlyScreen() {
 
     // 並び替え
     result = [...result].sort((a, b) => {
-      return filterState.sortOrder === "date-desc"
+      // 金額ソートが設定されている場合は金額でソート
+      if (filterState.amountSortOrder) {
+        return filterState.amountSortOrder === "amount-desc"
+          ? b.amount - a.amount
+          : a.amount - b.amount;
+      }
+      // それ以外は日付でソート
+      return filterState.dateSortOrder === "date-desc"
         ? new Date(b.date).getTime() - new Date(a.date).getTime()
         : new Date(a.date).getTime() - new Date(b.date).getTime();
     });
@@ -238,56 +273,100 @@ export default function MonthlyScreen() {
     <ScreenContainer>
       {/* Header with Month Selector - 固定 */}
       <View
-        className="flex-row items-center justify-between px-4"
         style={{
           backgroundColor: colors.background,
           borderBottomWidth: 1,
           borderBottomColor: colors.border,
           paddingTop: 12,
           paddingBottom: 12,
+          paddingHorizontal: 16,
         }}
       >
-        <Pressable
-          style={({ pressed }) => ({
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            backgroundColor: colors.surface,
+        <View
+          style={{
+            flexDirection: "row",
             alignItems: "center",
-            justifyContent: "center",
-            opacity: pressed ? 0.6 : 1,
-          })}
-          onPress={handlePreviousMonth}
+            justifyContent: "space-between",
+          }}
         >
-          <MaterialIcons
-            name="chevron-left"
-            size={24}
-            color={colors.foreground}
-          />
-        </Pressable>
+          <Pressable
+            style={({ pressed }) => ({
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              backgroundColor: colors.surface,
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: pressed ? 0.6 : 1,
+            })}
+            onPress={handlePreviousMonth}
+          >
+            <MaterialIcons
+              name="chevron-left"
+              size={24}
+              color={colors.foreground}
+            />
+          </Pressable>
 
-        <Text className="text-2xl font-bold text-foreground">
-          {selectedYear}年{selectedMonth}月
-        </Text>
+          <Text className="text-2xl font-bold text-foreground">
+            {selectedYear}年{selectedMonth}月
+          </Text>
 
-        <Pressable
-          style={({ pressed }) => ({
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            backgroundColor: colors.surface,
-            alignItems: "center",
-            justifyContent: "center",
-            opacity: pressed ? 0.6 : 1,
-          })}
-          onPress={handleNextMonth}
-        >
-          <MaterialIcons
-            name="chevron-right"
-            size={24}
-            color={colors.foreground}
-          />
-        </Pressable>
+          <Pressable
+            style={({ pressed }) => ({
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              backgroundColor: colors.surface,
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: pressed ? 0.6 : 1,
+            })}
+            onPress={handleNextMonth}
+          >
+            <MaterialIcons
+              name="chevron-right"
+              size={24}
+              color={colors.foreground}
+            />
+          </Pressable>
+        </View>
+
+        {/* 今月に戻るボタン */}
+        {!isCurrentMonth && (
+          <View style={{ alignItems: "center", marginTop: 8 }}>
+            <Pressable
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
+                paddingHorizontal: 14,
+                paddingVertical: 8,
+                borderRadius: 20,
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.primary,
+                opacity: pressed ? 0.6 : 1,
+              })}
+              onPress={handleGoToCurrentMonth}
+            >
+              <MaterialIcons
+                name="today"
+                size={16}
+                color={colors.primary}
+              />
+              <Text
+                style={{
+                  color: colors.primary,
+                  fontSize: 13,
+                  fontWeight: "600",
+                }}
+              >
+                今月に戻る
+              </Text>
+            </Pressable>
+          </View>
+        )}
       </View>
 
       <ScrollView className="flex-1">
