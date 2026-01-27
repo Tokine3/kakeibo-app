@@ -69,3 +69,14 @@ export interface CategoryExpense {
   amount: number;
   percentage: number;
 }
+
+/**
+ * フィルタ条件
+ */
+export interface FilterState {
+  transactionType: "all" | "income" | "expense";
+  selectedCategoryIds: string[];
+  amountMin: number | null;
+  amountMax: number | null;
+  sortOrder: "date-desc" | "date-asc";
+}

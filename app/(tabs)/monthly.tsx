@@ -13,6 +13,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { PieChart } from "react-native-chart-kit";
 import { ScreenContainer } from "@/components/screen-container";
 import { TransactionModal } from "@/components/transaction-modal";
+import { FilterModal } from "@/components/filter-modal";
 import { SegmentControl, ViewMode } from "@/components/segment-control";
 import { DoublePieChart } from "@/components/double-pie-chart";
 import { useColors } from "@/hooks/use-colors";
@@ -25,7 +26,7 @@ import {
   formatDate,
   formatPercentage,
 } from "@/lib/calculations";
-import type { Transaction, Category } from "@/types";
+import type { Transaction, Category, FilterState } from "@/types";
 
 export default function MonthlyScreen() {
   const colors = useColors();
@@ -41,6 +42,17 @@ export default function MonthlyScreen() {
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
   const [viewMode, setViewMode] = useState<ViewMode>("all");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null,
+  );
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [filterState, setFilterState] = useState<FilterState>({
+    transactionType: "all",
+    selectedCategoryIds: [],
+    amountMin: null,
+    amountMax: null,
+    sortOrder: "date-desc",
+  });
 
   const loadData = useCallback(async () => {
     try {
@@ -95,10 +107,55 @@ export default function MonthlyScreen() {
     [monthTransactions, categories],
   );
 
+  const isFilterActive = useMemo(() => {
+    return (
+      filterState.transactionType !== "all" ||
+      filterState.selectedCategoryIds.length > 0 ||
+      filterState.amountMin !== null ||
+      filterState.amountMax !== null ||
+      filterState.sortOrder !== "date-desc"
+    );
+  }, [filterState]);
+
   const filteredTransactions = useMemo(() => {
-    if (viewMode === "all") return monthTransactions;
-    return monthTransactions.filter((t) => t.type === viewMode);
-  }, [monthTransactions, viewMode]);
+    let result = monthTransactions;
+
+    // 凡例のカテゴリ選択（独立機能）
+    if (selectedCategoryId) {
+      result = result.filter((t) => t.categoryId === selectedCategoryId);
+    }
+
+    // 検索モーダルのフィルタ - 収入・支出
+    if (filterState.transactionType !== "all") {
+      result = result.filter((t) => t.type === filterState.transactionType);
+    } else if (viewMode !== "all") {
+      result = result.filter((t) => t.type === viewMode);
+    }
+
+    // 検索モーダルのフィルタ - カテゴリ（凡例選択がない場合のみ）
+    if (!selectedCategoryId && filterState.selectedCategoryIds.length > 0) {
+      result = result.filter(
+        (t) => t.categoryId && filterState.selectedCategoryIds.includes(t.categoryId),
+      );
+    }
+
+    // 検索モーダルのフィルタ - 金額範囲
+    if (filterState.amountMin !== null) {
+      result = result.filter((t) => t.amount >= filterState.amountMin!);
+    }
+    if (filterState.amountMax !== null) {
+      result = result.filter((t) => t.amount <= filterState.amountMax!);
+    }
+
+    // 並び替え
+    result = [...result].sort((a, b) => {
+      return filterState.sortOrder === "date-desc"
+        ? new Date(b.date).getTime() - new Date(a.date).getTime()
+        : new Date(a.date).getTime() - new Date(b.date).getTime();
+    });
+
+    return result;
+  }, [monthTransactions, viewMode, selectedCategoryId, filterState]);
 
   const currentCategoryData = useMemo(() => {
     if (viewMode === "expense") return categoryExpenseData;
@@ -244,7 +301,10 @@ export default function MonthlyScreen() {
                 <Text className="text-base text-foreground">収入</Text>
                 <Text
                   className="text-lg font-semibold"
-                  style={{ color: colors.success, fontVariant: ["tabular-nums"] }}
+                  style={{
+                    color: colors.success,
+                    fontVariant: ["tabular-nums"],
+                  }}
                 >
                   {formatAmount(summary.income)}
                 </Text>
@@ -325,9 +385,15 @@ export default function MonthlyScreen() {
             <View style={{ marginBottom: 12 }}>
               <SegmentControl value={viewMode} onChange={setViewMode} />
             </View>
-            <Text className="text-lg font-bold text-foreground mb-2">
-              {sectionTitle}
-            </Text>
+            {viewMode === "all" ? (
+              <Text className="text-lg font-bold text-foreground mb-2">
+                {sectionTitle}
+              </Text>
+            ) : (
+              <Text className="text-lg font-bold text-foreground">
+                {sectionTitle}
+              </Text>
+            )}
 
             {hasChartData ? (
               <>
@@ -357,19 +423,44 @@ export default function MonthlyScreen() {
                 )}
 
                 {viewMode === "all" ? (
-                  <View className="gap-2">
+                  <View className="gap-1">
                     {categoryExpenseData.length > 0 && (
                       <Text
-                        className="text-sm font-semibold text-foreground mt-2"
+                        className="font-semibold text-foreground mt-2 mb-1"
                         style={{ color: colors.error }}
                       >
                         支出
                       </Text>
                     )}
                     {categoryExpenseData.map((ce) => (
-                      <View
+                      <Pressable
                         key={`expense-${ce.categoryId}`}
-                        className="flex-row items-center justify-between"
+                        style={({ pressed }) => ({
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          paddingVertical: 6,
+                          paddingHorizontal: 8,
+                          borderRadius: 8,
+                          backgroundColor:
+                            selectedCategoryId === ce.categoryId
+                              ? `${ce.categoryColor}20`
+                              : pressed
+                                ? `${colors.muted}10`
+                                : "transparent",
+                        })}
+                        onPress={() => {
+                          if (Platform.OS !== "web") {
+                            Haptics.impactAsync(
+                              Haptics.ImpactFeedbackStyle.Light,
+                            );
+                          }
+                          setSelectedCategoryId(
+                            selectedCategoryId === ce.categoryId
+                              ? null
+                              : ce.categoryId,
+                          );
+                        }}
                       >
                         <View className="flex-row items-center flex-1">
                           <View
@@ -381,28 +472,74 @@ export default function MonthlyScreen() {
                               marginRight: 8,
                             }}
                           />
-                          <Text className="text-sm text-foreground">
+                          <Text
+                            style={{
+                              fontSize: 14,
+                              color:
+                                selectedCategoryId === ce.categoryId
+                                  ? ce.categoryColor
+                                  : colors.foreground,
+                              fontWeight:
+                                selectedCategoryId === ce.categoryId
+                                  ? "600"
+                                  : "400",
+                            }}
+                          >
                             {ce.categoryName}
                           </Text>
                         </View>
-                        <Text className="text-sm font-semibold text-foreground">
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: "600",
+                            color:
+                              selectedCategoryId === ce.categoryId
+                                ? ce.categoryColor
+                                : colors.foreground,
+                          }}
+                        >
                           {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}
                           %)
                         </Text>
-                      </View>
+                      </Pressable>
                     ))}
                     {categoryIncome.length > 0 && (
                       <Text
-                        className="text-sm font-semibold text-foreground mt-2"
+                        className="font-semibold text-foreground mt-2 mb-1"
                         style={{ color: colors.success }}
                       >
                         収入
                       </Text>
                     )}
                     {categoryIncome.map((ce) => (
-                      <View
+                      <Pressable
                         key={`income-${ce.categoryId}`}
-                        className="flex-row items-center justify-between"
+                        style={({ pressed }) => ({
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          paddingVertical: 6,
+                          paddingHorizontal: 8,
+                          borderRadius: 8,
+                          backgroundColor:
+                            selectedCategoryId === ce.categoryId
+                              ? `${ce.categoryColor}20`
+                              : pressed
+                                ? `${colors.muted}10`
+                                : "transparent",
+                        })}
+                        onPress={() => {
+                          if (Platform.OS !== "web") {
+                            Haptics.impactAsync(
+                              Haptics.ImpactFeedbackStyle.Light,
+                            );
+                          }
+                          setSelectedCategoryId(
+                            selectedCategoryId === ce.categoryId
+                              ? null
+                              : ce.categoryId,
+                          );
+                        }}
                       >
                         <View className="flex-row items-center flex-1">
                           <View
@@ -414,23 +551,69 @@ export default function MonthlyScreen() {
                               marginRight: 8,
                             }}
                           />
-                          <Text className="text-sm text-foreground">
+                          <Text
+                            style={{
+                              fontSize: 14,
+                              color:
+                                selectedCategoryId === ce.categoryId
+                                  ? ce.categoryColor
+                                  : colors.foreground,
+                              fontWeight:
+                                selectedCategoryId === ce.categoryId
+                                  ? "600"
+                                  : "400",
+                            }}
+                          >
                             {ce.categoryName}
                           </Text>
                         </View>
-                        <Text className="text-sm font-semibold text-foreground">
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: "600",
+                            color:
+                              selectedCategoryId === ce.categoryId
+                                ? ce.categoryColor
+                                : colors.foreground,
+                          }}
+                        >
                           {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}
                           %)
                         </Text>
-                      </View>
+                      </Pressable>
                     ))}
                   </View>
                 ) : (
-                  <View className="gap-2">
+                  <View className="gap-1">
                     {currentCategoryData.map((ce) => (
-                      <View
+                      <Pressable
                         key={ce.categoryId}
-                        className="flex-row items-center justify-between"
+                        style={({ pressed }) => ({
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          paddingVertical: 6,
+                          paddingHorizontal: 8,
+                          borderRadius: 8,
+                          backgroundColor:
+                            selectedCategoryId === ce.categoryId
+                              ? `${ce.categoryColor}20`
+                              : pressed
+                                ? `${colors.muted}10`
+                                : "transparent",
+                        })}
+                        onPress={() => {
+                          if (Platform.OS !== "web") {
+                            Haptics.impactAsync(
+                              Haptics.ImpactFeedbackStyle.Light,
+                            );
+                          }
+                          setSelectedCategoryId(
+                            selectedCategoryId === ce.categoryId
+                              ? null
+                              : ce.categoryId,
+                          );
+                        }}
                       >
                         <View className="flex-row items-center flex-1">
                           <View
@@ -442,15 +625,36 @@ export default function MonthlyScreen() {
                               marginRight: 8,
                             }}
                           />
-                          <Text className="text-sm text-foreground">
+                          <Text
+                            style={{
+                              fontSize: 14,
+                              color:
+                                selectedCategoryId === ce.categoryId
+                                  ? ce.categoryColor
+                                  : colors.foreground,
+                              fontWeight:
+                                selectedCategoryId === ce.categoryId
+                                  ? "600"
+                                  : "400",
+                            }}
+                          >
                             {ce.categoryName}
                           </Text>
                         </View>
-                        <Text className="text-sm font-semibold text-foreground">
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: "600",
+                            color:
+                              selectedCategoryId === ce.categoryId
+                                ? ce.categoryColor
+                                : colors.foreground,
+                          }}
+                        >
                           {formatAmount(ce.amount)} ({ce.percentage.toFixed(1)}
                           %)
                         </Text>
-                      </View>
+                      </Pressable>
                     ))}
                   </View>
                 )}
@@ -469,15 +673,90 @@ export default function MonthlyScreen() {
 
           {/* Transaction List */}
           <View>
-            <Text className="text-lg font-bold text-foreground mb-3">
-              取引履歴
-              {viewMode !== "all" && (
-                <Text className="text-sm font-normal text-muted">
-                  {" "}
-                  ({viewMode === "expense" ? "支出" : "収入"}のみ)
-                </Text>
-              )}
-            </Text>
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-lg font-bold text-foreground">
+                取引履歴
+                {(viewMode !== "all" ||
+                  selectedCategoryId ||
+                  isFilterActive) && (
+                  <Text
+                    className="text-sm font-normal"
+                    style={{
+                      color: isFilterActive ? colors.primary : colors.muted,
+                    }}
+                  >
+                    {" "}
+                    (
+                    {isFilterActive && "フィルタ中"}
+                    {isFilterActive &&
+                      (viewMode !== "all" || selectedCategoryId) &&
+                      "・"}
+                    {viewMode !== "all" &&
+                      (viewMode === "expense" ? "支出" : "収入")}
+                    {viewMode !== "all" && selectedCategoryId && "・"}
+                    {selectedCategoryId &&
+                      categories.find((c) => c.id === selectedCategoryId)?.name}
+                    )
+                  </Text>
+                )}
+              </Text>
+              <View className="flex-row items-center gap-2">
+                {/* Filter Button */}
+                <Pressable
+                  style={({ pressed }) => ({
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
+                    backgroundColor: isFilterActive
+                      ? `${colors.primary}20`
+                      : colors.surface,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: pressed ? 0.7 : 1,
+                  })}
+                  onPress={() => {
+                    if (Platform.OS !== "web") {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
+                    setFilterModalVisible(true);
+                  }}
+                >
+                  <MaterialIcons
+                    name="filter-list"
+                    size={20}
+                    color={isFilterActive ? colors.primary : colors.muted}
+                  />
+                </Pressable>
+                {/* Clear Category Button */}
+                {selectedCategoryId && (
+                  <Pressable
+                    style={({ pressed }) => ({
+                      paddingHorizontal: 10,
+                      paddingVertical: 4,
+                      borderRadius: 16,
+                      backgroundColor: `${colors.muted}20`,
+                      opacity: pressed ? 0.7 : 1,
+                    })}
+                    onPress={() => {
+                      if (Platform.OS !== "web") {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      }
+                      setSelectedCategoryId(null);
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: colors.muted,
+                        fontSize: 12,
+                        fontWeight: "400",
+                      }}
+                    >
+                      すべて表示
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+            </View>
 
             {filteredTransactions.length === 0 ? (
               <View className="bg-surface rounded-2xl p-6 border border-border items-center">
@@ -582,6 +861,14 @@ export default function MonthlyScreen() {
         onClose={handleModalClose}
         onSave={handleModalSave}
         transaction={selectedTransaction}
+        categories={categories}
+      />
+
+      <FilterModal
+        visible={filterModalVisible}
+        onClose={() => setFilterModalVisible(false)}
+        onApply={setFilterState}
+        initialState={filterState}
         categories={categories}
       />
     </ScreenContainer>
