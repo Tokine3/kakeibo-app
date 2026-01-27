@@ -389,6 +389,7 @@ export function CategoryModal({
                           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         }
                         setIcon(iconName);
+                        setShowIconPicker(false);
                       }}
                     >
                       <MaterialIcons
@@ -475,6 +476,7 @@ export function CategoryModal({
                           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         }
                         setColor(colorValue);
+                        setShowColorPicker(false);
                       }}
                     >
                       {color === colorValue && (

@@ -208,7 +208,10 @@ export default function YearlyScreen() {
                 <Text className="text-base text-foreground">収入</Text>
                 <Text
                   className="text-lg font-semibold"
-                  style={{ color: colors.success, fontVariant: ["tabular-nums"] }}
+                  style={{
+                    color: colors.success,
+                    fontVariant: ["tabular-nums"],
+                  }}
                 >
                   {formatAmount(summary.income)}
                 </Text>
@@ -409,7 +412,7 @@ export default function YearlyScreen() {
                           flexDirection: "row",
                           alignItems: "center",
                           justifyContent: "space-between",
-                          paddingVertical: 8,
+                          paddingVertical: 6,
                           paddingHorizontal: 8,
                           borderRadius: 8,
                         }}
@@ -460,7 +463,7 @@ export default function YearlyScreen() {
                           flexDirection: "row",
                           alignItems: "center",
                           justifyContent: "space-between",
-                          paddingVertical: 8,
+                          paddingVertical: 6,
                           paddingHorizontal: 8,
                           borderRadius: 8,
                         }}

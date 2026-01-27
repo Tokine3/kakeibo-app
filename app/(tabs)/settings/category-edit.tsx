@@ -1,11 +1,18 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { View, Text, ScrollView, Platform, Pressable } from "react-native";
+import { View, Text, Platform, Pressable } from "react-native";
+import {
+  ScaleDecorator,
+  RenderItemParams,
+  NestableScrollContainer,
+  NestableDraggableFlatList,
+} from "react-native-draggable-flatlist";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/use-colors";
-import { getCategories, deleteCategory } from "@/lib/storage";
+import { getCategories, deleteCategory, updateCategoryOrders } from "@/lib/storage";
 import type { Category } from "@/types";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { CategoryModal } from "@/components/category-modal";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function CategoryEditScreen() {
   const colors = useColors();
@@ -85,52 +92,105 @@ export default function CategoryEditScreen() {
     }
   };
 
-  const renderCategoryCard = (category: Category) => (
-    <Pressable
-      key={category.id}
-      style={({ pressed }) => ({
-        backgroundColor: colors.surface,
-        borderRadius: 16,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: colors.border,
-        opacity: pressed ? 0.7 : 1,
-      })}
-      onPress={() => handleCategoryPress(category)}
-    >
-      <View
+  const handleDragEnd = async (
+    type: "expense" | "income",
+    newData: Category[]
+  ) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    // 新しい順序でカテゴリを更新
+    const otherCategories =
+      type === "expense" ? incomeCategories : expenseCategories;
+
+    // 支出カテゴリは0から、収入カテゴリは支出カテゴリの数から開始
+    const baseOrder = type === "expense" ? 0 : expenseCategories.length;
+    const updatedData = newData.map((cat, index) => ({
+      ...cat,
+      order: baseOrder + index,
+    }));
+
+    // ローカル状態を即座に更新
+    const allCategories =
+      type === "expense"
+        ? [...updatedData, ...otherCategories]
+        : [...otherCategories, ...updatedData];
+    setCategories(allCategories.sort((a, b) => a.order - b.order));
+
+    // サーバーに保存
+    try {
+      await updateCategoryOrders(
+        updatedData.map((cat) => ({ id: cat.id, order: cat.order }))
+      );
+    } catch (error) {
+      console.error("Failed to update category orders:", error);
+      loadCategories(); // エラー時は再読み込み
+    }
+  };
+
+  const renderCategoryItem = ({
+    item,
+    drag,
+    isActive,
+  }: RenderItemParams<Category>) => (
+    <ScaleDecorator>
+      <Pressable
         style={{
-          flexDirection: "row",
-          alignItems: "center",
+          backgroundColor: isActive ? colors.background : colors.surface,
+          borderRadius: 16,
+          padding: 16,
+          borderWidth: 1,
+          borderColor: isActive ? colors.primary : colors.border,
+          opacity: isActive ? 0.95 : 1,
         }}
+        onPress={() => handleCategoryPress(item)}
+        onLongPress={drag}
+        delayLongPress={150}
       >
         <View
           style={{
-            width: 48,
-            height: 48,
-            borderRadius: 24,
-            backgroundColor: category.color,
+            flexDirection: "row",
             alignItems: "center",
-            justifyContent: "center",
-            marginRight: 12,
           }}
         >
-          <MaterialIcons name={category.icon as any} size={24} color="#FFFFFF" />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text
+          {/* ドラッグハンドル */}
+          <View
             style={{
-              fontSize: 18,
-              fontWeight: "600",
-              color: colors.foreground,
+              marginRight: 8,
+              padding: 4,
             }}
           >
-            {category.name}
-          </Text>
+            <MaterialIcons name="drag-indicator" size={20} color={colors.muted} />
+          </View>
+          <View
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 24,
+              backgroundColor: item.color,
+              alignItems: "center",
+              justifyContent: "center",
+              marginRight: 12,
+            }}
+          >
+            <MaterialIcons name={item.icon as any} size={24} color="#FFFFFF" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "600",
+                color: colors.foreground,
+              }}
+            >
+              {item.name}
+            </Text>
+          </View>
+          <MaterialIcons name="chevron-right" size={24} color={colors.muted} />
         </View>
-        <MaterialIcons name="chevron-right" size={24} color={colors.muted} />
-      </View>
-    </Pressable>
+      </Pressable>
+    </ScaleDecorator>
   );
 
   if (loading) {
@@ -149,8 +209,8 @@ export default function CategoryEditScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
+      <NestableScrollContainer
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
@@ -167,9 +227,14 @@ export default function CategoryEditScreen() {
         >
           支出
         </Text>
-        <View style={{ gap: 8, marginBottom: 24 }}>
-          {expenseCategories.map(renderCategoryCard)}
-        </View>
+        <NestableDraggableFlatList
+          data={expenseCategories}
+          keyExtractor={(item) => item.id}
+          renderItem={renderCategoryItem}
+          onDragEnd={({ data }) => handleDragEnd("expense", data)}
+          style={{ marginBottom: 24 }}
+          ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+        />
 
         {/* 収入カテゴリ */}
         <Text
@@ -183,10 +248,14 @@ export default function CategoryEditScreen() {
         >
           収入
         </Text>
-        <View style={{ gap: 8 }}>
-          {incomeCategories.map(renderCategoryCard)}
-        </View>
-      </ScrollView>
+        <NestableDraggableFlatList
+          data={incomeCategories}
+          keyExtractor={(item) => item.id}
+          renderItem={renderCategoryItem}
+          onDragEnd={({ data }) => handleDragEnd("income", data)}
+          ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+        />
+      </NestableScrollContainer>
 
       {/* Floating Action Button */}
       <Pressable
@@ -222,6 +291,6 @@ export default function CategoryEditScreen() {
         canDelete={editingCategory ? canDelete(editingCategory) : false}
         onDelete={handleDelete}
       />
-    </View>
+    </GestureHandlerRootView>
   );
 }

@@ -311,6 +311,29 @@ async function deleteCategoryWeb(id: string): Promise<boolean> {
   }
 }
 
+async function updateCategoryOrdersWeb(
+  categoryOrders: { id: string; order: number }[]
+): Promise<void> {
+  try {
+    const categories = await getCategoriesWeb();
+    const timestamp = getCurrentTimestamp();
+    const orderMap = new Map(categoryOrders.map((c) => [c.id, c.order]));
+
+    const updatedCategories = categories.map((cat) => {
+      const newOrder = orderMap.get(cat.id);
+      if (newOrder !== undefined) {
+        return { ...cat, order: newOrder, updatedAt: timestamp };
+      }
+      return cat;
+    });
+
+    await AsyncStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(updatedCategories));
+  } catch (error) {
+    console.error("Failed to update category orders (Web):", error);
+    throw error;
+  }
+}
+
 async function clearAllDataWeb(): Promise<void> {
   try {
     await AsyncStorage.removeItem(STORAGE_KEYS.TRANSACTIONS);
@@ -604,6 +627,23 @@ async function deleteCategoryNative(id: string): Promise<boolean> {
   return result.changes > 0;
 }
 
+async function updateCategoryOrdersNative(
+  categoryOrders: { id: string; order: number }[]
+): Promise<void> {
+  const db = await getDatabase();
+  if (!db) return;
+
+  const timestamp = getCurrentTimestamp();
+  for (const { id, order } of categoryOrders) {
+    await db.runAsync(
+      "UPDATE categories SET display_order = ?, updated_at = ? WHERE id = ?",
+      order,
+      timestamp,
+      id
+    );
+  }
+}
+
 async function clearAllDataNative(): Promise<void> {
   const db = await getDatabase();
   if (!db) return;
@@ -722,6 +762,16 @@ export async function deleteCategory(id: string): Promise<boolean> {
     return deleteCategoryWeb(id);
   } else {
     return deleteCategoryNative(id);
+  }
+}
+
+export async function updateCategoryOrders(
+  categoryOrders: { id: string; order: number }[]
+): Promise<void> {
+  if (isWeb()) {
+    return updateCategoryOrdersWeb(categoryOrders);
+  } else {
+    return updateCategoryOrdersNative(categoryOrders);
   }
 }
 
